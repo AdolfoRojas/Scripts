@@ -21,5 +21,8 @@ DFSampleVSProjects <- as.data.frame(table(SampleVSProjects$BioSample, dnn = list
 
 M1 <- merge(DFSampleVSRuns,DFSampleVSExperiments, by.x = "Sample", by.y = "Sample")
 M2 <- merge(M1,DFSampleVSProjects, by.x = "Sample", by.y = "Sample")
+
 InformeDF <- Reduce(merge, list(DFSampleVSRuns, DFSampleVSExperiments, DFSampleVSProjects))
+ write.table(InformeDF,file = "InformeDF", sep = "\t")
+ ?write.table()
 
