@@ -1,8 +1,8 @@
 #!/usr/bin/perl
-system ("../mkdir -p Temp");
-system ("../mkdir -p IDs");
-system ("../mkdir -p Resultados");
-system ("../rm Temp/*");
+system ("mkdir -p ../Temp");
+system ("mkdir -p ../IDs");
+system ("mkdir -p ../Resultados");
+system ("rm ../Temp/*");
 
 print "Pasos N°1 y N°2, Entrada de poblaciones y obtencion de IDs SRA\n\n";
 while ($lugar=<>){
@@ -23,7 +23,7 @@ $datos="";
 close (LUGAR);}
 
 ## Eliminar IDs repetidas y generar archivo unico
-system ("cat ../Temp/*|sort|uniq>Temp\/all.txt");
+system ("cat ../Temp/*|sort|uniq>../Temp/all.txt");
 
 print "Recopilando IDs antiguas\n\n";
 
@@ -40,7 +40,7 @@ while ($olds = <TSV>){
 close (OLDS);
 close (TSV);
 
-system ("cat ../Temp/all.txt IDs/IDs_Antiguos | sort | uniq -u > IDs/IDs_Nuevos");
+system ("cat ../Temp/all.txt IDs/IDs_Antiguos | sort | uniq -u > ../IDs/IDs_Nuevos");
 $IDs_Nuevos = qx/wc -l ..\/IDs\/IDs_Nuevos/;
 chomp ($IDs_Nuevos);
 print "$IDs_Nuevos\n\n";
