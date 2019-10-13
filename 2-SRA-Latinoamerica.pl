@@ -40,7 +40,7 @@ while ($olds = <TSV>){
 close (OLDS);
 close (TSV);
 
-system ("cat ../Temp/all.txt IDs/IDs_Antiguos | sort | uniq -u > ../IDs/IDs_Nuevos");
+system ("cat ../Temp/all.txt ../IDs/IDs_Antiguos | sort | uniq -u > ../IDs/IDs_Nuevos");
 $IDs_Nuevos = qx/wc -l ..\/IDs\/IDs_Nuevos/;
 chomp ($IDs_Nuevos);
 print "$IDs_Nuevos\n\n";
