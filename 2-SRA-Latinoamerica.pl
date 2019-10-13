@@ -1,61 +1,61 @@
 #!/usr/bin/perl
-#system ("mkdir -p Temp");
-#system ("mkdir -p IDs");
-#system ("mkdir -p Resultados");
-#system ("rm Temp/*");
+system ("../mkdir -p Temp");
+system ("../mkdir -p IDs");
+system ("../mkdir -p Resultados");
+system ("../rm Temp/*");
 
-#print "Pasos N°1 y N°2, Entrada de poblaciones y obtencion de IDs SRA\n\n";
-#while ($lugar=<>){
-#	chomp ($lugar);
-#open (LUGAR, ">Temp\/$lugar") or die "Error en escritura de IDs (lugares)";
-### Obtencion de IDs a partir del input
-#$datos = qx/esearch -db sra -query '$lugar AND Human [ORGN] AND public' | efetch -format docsum | xtract -pattern DocumentSummary -ACC \@acc -block DocumentSummary -element "&ACC"/;
-### Generar formato de lista para el Output
-#$datos=~ s/\t/\n/g;
-### Filtrar IDs que no sean del tipo SRX o ERX
-#$datos=~ s/[SDE]R[PZRAS]\d+\n//gi;
-#print "Procesando $lugar\t ";
-### Guardar IDs a un archivo correspondiente al Input
-#print LUGAR "$datos\n";
-#print " Finalizado\n\n";
-### Restaurar valor nulo de la Variaable en caso de no obtener resultados con el Input
-#$datos="";
-#close (LUGAR);}
+print "Pasos N°1 y N°2, Entrada de poblaciones y obtencion de IDs SRA\n\n";
+while ($lugar=<>){
+	chomp ($lugar);
+open (LUGAR, ">../Temp/$lugar") or die "Error en escritura de IDs (lugares)";
+## Obtencion de IDs a partir del input
+$datos = qx/esearch -db sra -query '$lugar AND Human [ORGN] AND public' | efetch -format docsum | xtract -pattern DocumentSummary -ACC \@acc -block DocumentSummary -element "&ACC"/;
+## Generar formato de lista para el Output
+$datos=~ s/\t/\n/g;
+## Filtrar IDs que no sean del tipo SRX o ERX
+$datos=~ s/[SDE]R[PZRAS]\d+\n//gi;
+print "Procesando $lugar\t ";
+## Guardar IDs a un archivo correspondiente al Input
+print LUGAR "$datos\n";
+print " Finalizado\n\n";
+## Restaurar valor nulo de la Variaable en caso de no obtener resultados con el Input
+$datos="";
+close (LUGAR);}
 
-### Eliminar IDs repetidas y generar archivo unico
-#system ("cat Temp\/\*|sort|uniq>Temp\/all.txt");
+## Eliminar IDs repetidas y generar archivo unico
+system ("cat ../Temp/*|sort|uniq>Temp\/all.txt");
 
-#print "Recopilando IDs antiguas\n\n";
+print "Recopilando IDs antiguas\n\n";
 
-#open (OLDS, ">IDs/IDs_Antiguos");
-#open (TSV, "Muestras.tsv");
-#while ($olds = <TSV>){
-#	chomp ($olds);
-#		if ($olds =~ /\t*["-]?([SE]RX\d+)"?/i){
-#			 $old_ID = $1; } else {
-#				$old_ID = "";}
-#			print OLDS "$old_ID\n";
-#	$old_ID=""; 
-#		}
-#close (OLDS);
-#close (TSV);
+open (OLDS, ">../IDs/IDs_Antiguos");
+open (TSV, "../Muestras.tsv"); #######################3333
+while ($olds = <TSV>){
+	chomp ($olds);
+		if ($olds =~ /\t*["-]?([SE]RX\d+)"?/i){
+			 $old_ID = $1; } else {
+				$old_ID = "";}
+			print OLDS "$old_ID\n";
+	$old_ID=""; 
+		}
+close (OLDS);
+close (TSV);
 
-system ("cat Temp\/all.txt IDs\/IDs_Antiguos | sort | uniq -u > IDs\/IDs_Nuevos");
-$IDs_Nuevos = qx/wc -l IDs\/IDs_Nuevos/;
+system ("cat ../Temp/all.txt IDs/IDs_Antiguos | sort | uniq -u > IDs/IDs_Nuevos");
+$IDs_Nuevos = qx/wc -l ..\/IDs\/IDs_Nuevos/;
 chomp ($IDs_Nuevos);
 print "$IDs_Nuevos\n\n";
 
-open (SALIDA, ">Temp\/Salida.txt");
+open (SALIDA, ">../Temp/Salida.txt");
 ## Obtener infromacion de las IDs recopiladas
-$muestra= qx/epost -db sra -input IDs\/IDs_Nuevos -format acc | esummary -format runinfo -mode xml/;
+$muestra= qx/epost -db sra -input ..\/IDs\/IDs_Nuevos -format acc | esummary -format runinfo -mode xml/;
 print SALIDA "$muestra\n";
 $muestra="";
 close (SALIDA);
 
 print "Paso N°3 Filtrado preeliminar\n\n";
 
-open (INPUT, "Temp\/Salida.txt") or die "in";
-open (OUT, ">Temp\/Filtrados.txt") or die "Error Filtrado";
+open (INPUT, "../Temp/Salida.txt") or die "in";
+open (OUT, ">../Temp/Filtrados.txt") or die "Error Filtrado";
 ## Cambio de delimitador segun el formato de archivo 
 $/='<Row>';
 while ($datos=<INPUT>){
@@ -73,12 +73,12 @@ close (OUT);
 
 print "Paso N°4 Extraccion de datos y metadatos; generacion de tabla\n\n";
 
-open (TABLA, "Temp\/Filtrados.txt") or die "Error Tabla";
-open (SALIDA, ">>Muestras.tsv");
-open (UTILIZADOS, ">>IDs\/IDs_Antiguos");
+open (TABLA, "../Temp/Filtrados.txt") or die "Error Tabla";
+open (SALIDA, ">>../Muestras.tsv");
+open (UTILIZADOS, ">>../IDs/IDs_Antiguos");
 $/="</Row>";
 ## Imprimir nombres de las Columnas
-print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots with mates	avgLength	Size(MB)	Dowload	Experiment	Library	Strategy	Selection	Source	Layout	InsertSize	InsertDev	Platform	Model	SRAstudy	Bioproject	ProjectID	Sample	BioSample	SampleType	TaxID	ScientificName	SampleName	Sex	Tumor	Center	Submission	Acceso	RunHash	ReadHash	Project Description	Sample Metadata-->\n";
+print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots with mates	avgLength	Size(MB)	Dowload	Experiment	Library	Strategy	Selection	Source	Layout	InsertSize	InsertDev	Platform	Model	SRAstudy	Bioproject	ProjectID	Sample	BioSample	SampleType	TaxID	ScientificName	SampleName	Sex	Tumor	Center	Submission	Acceso	RunHash	ReadHash	Sample Metadata-->\n";
 	while ($objetos= <TABLA>){;
 		chomp ($objetos);
 	if ($objetos =~ /<Experiment>\s*["-]?(\w+\s*\w*)"?/i) {
@@ -157,8 +157,8 @@ print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots with mat
 				$BioProject = $1; } else {
 					$BioProject = "";}
 	## Obtencion de la informacion del proyecto
-	$Project_description= qx/esearch -db bioproject -query $BioProject | efetch -format docsum | xtract -pattern DocumentSummary -block Project_Description -element Project_Description/;
-	$Project_description=~ s/\n//g;
+	#$Project_description= qx/esearch -db bioproject -query $BioProject | efetch -format docsum | xtract -pattern DocumentSummary -block Project_Description -element Project_Description/;
+	#$Project_description=~ s/\n//g;
 	if ($objetos =~ /<ProjectID>\s*["-]?(\w+\s*\w*)"?/i) {
 				$ProjectID = $1; } else {
 					$ProjectID = "";}
@@ -198,7 +198,7 @@ print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots with mat
 	if ($objetos =~ /<ReadHash>\s*["-]?(\w+\s*\w*)"?/i) {
 				$ReadHash = $1; } else {
 					$ReadHash = "";}
-print SALIDA "$Run	$ReleaseDate	$LoadDate	$AssemblyName	$spots	$bases	$spots_with_mates	$avgLength	$size_MB	$download_path	$Experiment	$LibraryName	$LibraryStrategy	$LibrarySelection	$LibrarySource	$LibraryLayout	$InsertSize	$InsertDev	$Platform	$Model	$SRAStudy	$BioProject	$ProjectID	$Sample	$BioSample	$SampleType	$TaxID	$ScientificName	$SampleName	$Sex	$Tumor	$CenterName	$Submission	$Consent	$RunHash	$ReadHash	$Project_description	$metadatos\n";
+print SALIDA "$Run	$ReleaseDate	$LoadDate	$AssemblyName	$spots	$bases	$spots_with_mates	$avgLength	$size_MB	$download_path	$Experiment	$LibraryName	$LibraryStrategy	$LibrarySelection	$LibrarySource	$LibraryLayout	$InsertSize	$InsertDev	$Platform	$Model	$SRAStudy	$BioProject	$ProjectID	$Sample	$BioSample	$SampleType	$TaxID	$ScientificName	$SampleName	$Sex	$Tumor	$CenterName	$Submission	$Consent	$RunHash	$ReadHash	$metadatos\n";
 $metadatos="";
 $Project_description="";
 	}
@@ -207,6 +207,6 @@ $Project_description="";
 close (TABLA);
 close (SALIDA);
 close (UTILIZADOS);
-system ("sort Muestras.tsv | uniq > Resultados/Tabla_Muestras.tsv");
-system ("wc -l Resultados/Tabla_Muestras.tsv");
-system ("less -S Resultados/Tabla_Muestras.tsv");
+system ("sort Muestras.tsv | uniq > ../Resultados/Tabla_Muestras.tsv");
+system ("wc -l ../Resultados/Tabla_Muestras.tsv");
+system ("less -S ../Resultados/Tabla_Muestras.tsv");
