@@ -25,25 +25,25 @@
 ### Eliminar IDs repetidas y generar archivo unico
 #system ("cat ../Temp/*|sort|uniq>../Temp/all.txt");
 
-print "Recopilando IDs antiguas\n\n";
+#print "Recopilando IDs antiguas\n\n";
 
-open (OLDS, ">../IDs/IDs_Antiguos");
-open (TSV, "../Muestras.tsv"); #######################3333
-while ($olds = <TSV>){
-	chomp ($olds);
-		if ($olds =~ /\t*["-]?([SE]RX\d+)"?/i){
-			 $old_ID = $1; } else {
-				$old_ID = "";}
-			print OLDS "$old_ID\n";
-	$old_ID=""; 
+#open (OLDS, ">../IDs/IDs_Antiguos");
+#open (TSV, "../Muestras.tsv"); #######################3333
+#while ($olds = <TSV>){
+#	chomp ($olds);
+#		if ($olds =~ /\t*["-]?([SE]RX\d+)"?/i){
+#			 $old_ID = $1; } else {
+#				$old_ID = "";}
+#			print OLDS "$old_ID\n";
+#	$old_ID=""; 
 		}
-close (OLDS);
-close (TSV);
+#close (OLDS);
+#close (TSV);
 
-system ("cat ../Temp/all.txt ../IDs/IDs_Antiguos | sort | uniq -u > ../IDs/IDs_Nuevos");
-$IDs_Nuevos = qx/wc -l ..\/IDs\/IDs_Nuevos/;
-chomp ($IDs_Nuevos);
-print "$IDs_Nuevos\n\n";
+#system ("cat ../Temp/all.txt ../IDs/IDs_Antiguos | sort | uniq -u > ../IDs/IDs_Nuevos");
+#$IDs_Nuevos = qx/wc -l ..\/IDs\/IDs_Nuevos/;
+#chomp ($IDs_Nuevos);
+#print "$IDs_Nuevos\n\n";
 
 open (SALIDA, ">../Temp/Salida.txt");
 ## Obtener infromacion de las IDs recopiladas
