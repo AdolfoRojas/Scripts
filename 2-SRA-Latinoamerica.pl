@@ -1,29 +1,29 @@
 #!/usr/bin/perl
-system ("mkdir -p ../Temp");
-system ("mkdir -p ../IDs");
-system ("mkdir -p ../Resultados");
-system ("rm ../Temp/*");
+#system ("mkdir -p ../Temp");
+#system ("mkdir -p ../IDs");
+#system ("mkdir -p ../Resultados");
+#system ("rm ../Temp/*");
 
-print "Pasos N°1 y N°2, Entrada de poblaciones y obtencion de IDs SRA\n\n";
-while ($lugar=<>){
-	chomp ($lugar);
-open (LUGAR, ">../Temp/$lugar") or die "Error en escritura de IDs (lugares)";
-## Obtencion de IDs a partir del input
-$datos = qx/esearch -db sra -query '$lugar AND Human [ORGN] AND public' | efetch -format docsum | xtract -pattern DocumentSummary -ACC \@acc -block DocumentSummary -element "&ACC"/;
-## Generar formato de lista para el Output
-$datos=~ s/\t/\n/g;
-## Filtrar IDs que no sean del tipo SRX o ERX
-$datos=~ s/[SDE]R[PZRAS]\d+\n//gi;
-print "Procesando $lugar\t ";
-## Guardar IDs a un archivo correspondiente al Input
-print LUGAR "$datos\n";
-print " Finalizado\n\n";
-## Restaurar valor nulo de la Variaable en caso de no obtener resultados con el Input
-$datos="";
-close (LUGAR);}
+#print "Pasos N°1 y N°2, Entrada de poblaciones y obtencion de IDs SRA\n\n";
+#while ($lugar=<>){
+#	chomp ($lugar);
+#open (LUGAR, ">../Temp/$lugar") or die "Error en escritura de IDs (lugares)";
+### Obtencion de IDs a partir del input
+#$datos = qx/esearch -db sra -query '$lugar AND Human [ORGN] AND public' | efetch -format docsum | xtract -pattern DocumentSummary -ACC \@acc -block DocumentSummary -element "&ACC"/;
+### Generar formato de lista para el Output
+#$datos=~ s/\t/\n/g;
+### Filtrar IDs que no sean del tipo SRX o ERX
+#$datos=~ s/[SDE]R[PZRAS]\d+\n//gi;
+#print "Procesando $lugar\t ";
+### Guardar IDs a un archivo correspondiente al Input
+#print LUGAR "$datos\n";
+#print " Finalizado\n\n";
+### Restaurar valor nulo de la Variaable en caso de no obtener resultados con el Input
+#$datos="";
+#close (LUGAR);}
 
-## Eliminar IDs repetidas y generar archivo unico
-system ("cat ../Temp/*|sort|uniq>../Temp/all.txt");
+### Eliminar IDs repetidas y generar archivo unico
+#system ("cat ../Temp/*|sort|uniq>../Temp/all.txt");
 
 print "Recopilando IDs antiguas\n\n";
 
