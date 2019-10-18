@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+use strict;
 #system ("mkdir -p ../Temp");
 #system ("mkdir -p ../IDs");
 #system ("mkdir -p ../Resultados");
@@ -36,7 +37,7 @@
 #				$old_ID = "";}
 #			print OLDS "$old_ID\n";
 #	$old_ID=""; 
-		}
+#		}
 #close (OLDS);
 #close (TSV);
 
@@ -45,12 +46,12 @@
 #chomp ($IDs_Nuevos);
 #print "$IDs_Nuevos\n\n";
 
-open (SALIDA, ">../Temp/Salida.txt");
-## Obtener infromacion de las IDs recopiladas
-$muestra= qx/epost -db sra -input ..\/IDs\/IDs_Nuevos -format acc | esummary -format runinfo -mode xml/;
-print SALIDA "$muestra\n";
-$muestra="";
-close (SALIDA);
+#open (SALIDA, ">../Temp/Salida.txt");
+### Obtener infromacion de las IDs recopiladas
+#$muestra= qx/epost -db sra -input ..\/IDs\/IDs_Nuevos -format acc | esummary -format runinfo -mode xml/;
+#print SALIDA "$muestra\n";
+#$muestra="";
+#close (SALIDA);
 
 print "Paso N°3 Filtrado preeliminar\n\n";
 
@@ -78,7 +79,7 @@ open (SALIDA, ">>../Muestras.tsv");
 open (UTILIZADOS, ">>../IDs/IDs_Antiguos");
 $/="</Row>";
 ## Imprimir nombres de las Columnas
-print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots with mates	avgLength	Size(MB)	Dowload	Experiment	Library	Strategy	Selection	Source	Layout	InsertSize	InsertDev	Platform	Model	SRAstudy	Bioproject	ProjectID	Sample	BioSample	SampleType	TaxID	ScientificName	SampleName	Sex	Tumor	Center	Submission	Acceso	RunHash	ReadHash	Sample Metadata-->\n";
+print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots with mates	avgLength	Size(MB)	Dowload	Experiment	Library	Strategy	Selection	Source	Layout	InsertSize	InsertDev	Platform	Model	SRAstudy	Bioproject	ProjectID	Sample	BioSample	SampleType	TaxID	ScientificName	SampleName	Sex	Tumor	Center	Submission	Acceso	RunHash	ReadHash\n";
 	while ($objetos= <TABLA>){;
 		chomp ($objetos);
 	if ($objetos =~ /<Experiment>\s*["-]?(\w+\s*\w*)"?/i) {
@@ -89,10 +90,10 @@ print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots with mat
 			 $BioSample = $1; } else {
 				$BioSample = "";}
 ## Obtencion de la informacion de la muestra relacionada al ID evaluado
-	$metadatos= qx/esearch -db biosample -query $BioSample | efetch -format docsum | xtract -pattern DocumentSummary -block Attribute -element Attribute/;
-	$metadatos=~ s/\n//g;
-	if ($metadatos =~ m/(metagenome)|(metagenomic)|(microbiota)|(transcriptomic)/i) { # Segundo filtrado en caso de falla del anterior
-	} else { # En caso de no presentar palabras del filtro se continua extrayendo mas informacion
+	#$metadatos= qx/esearch -db biosample -query $BioSample | efetch -format docsum | xtract -pattern DocumentSummary -block Attribute -element Attribute/;
+	#$metadatos=~ s/\n//g;
+	#if ($metadatos =~ m/(metagenome)|(metagenomic)|(microbiota)|(transcriptomic)/i) { # Segundo filtrado en caso de falla del anterior
+	#} else { # En caso de no presentar palabras del filtro se continua extrayendo mas informacion
 	if ($objetos =~ /<Run>\d*\s*["-]?(\w+\s*\w*)"?/i) {
 	      $Run = $1; } else {
  			   $Run = "";}
@@ -201,9 +202,9 @@ print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots with mat
 print SALIDA "$Run	$ReleaseDate	$LoadDate	$AssemblyName	$spots	$bases	$spots_with_mates	$avgLength	$size_MB	$download_path	$Experiment	$LibraryName	$LibraryStrategy	$LibrarySelection	$LibrarySource	$LibraryLayout	$InsertSize	$InsertDev	$Platform	$Model	$SRAStudy	$BioProject	$ProjectID	$Sample	$BioSample	$SampleType	$TaxID	$ScientificName	$SampleName	$Sex	$Tumor	$CenterName	$Submission	$Consent	$RunHash	$ReadHash	$metadatos\n";
 $metadatos="";
 $Project_description="";
-	}
+	
 	print UTILIZADOS "$Experiment\n";
-	}
+}
 close (TABLA);
 close (SALIDA);
 close (UTILIZADOS);
