@@ -199,8 +199,8 @@ print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots with mat
 	if ($objetos =~ /<ReadHash>\s*["-]?(\w+\s*\w*)"?/i) {
 				$ReadHash = $1; } else {
 					$ReadHash = "";}
-print SALIDA "$Run	$ReleaseDate	$LoadDate	$AssemblyName	$spots	$bases	$spots_with_mates	$avgLength	$size_MB	$download_path	$Experiment	$LibraryName	$LibraryStrategy	$LibrarySelection	$LibrarySource	$LibraryLayout	$InsertSize	$InsertDev	$Platform	$Model	$SRAStudy	$BioProject	$ProjectID	$Sample	$BioSample	$SampleType	$TaxID	$ScientificName	$SampleName	$Sex	$Tumor	$CenterName	$Submission	$Consent	$RunHash	$ReadHash	$metadatos\n";
-$metadatos="";
+print SALIDA "$Run	$ReleaseDate	$LoadDate	$AssemblyName	$spots	$bases	$spots_with_mates	$avgLength	$size_MB	$download_path	$Experiment	$LibraryName	$LibraryStrategy	$LibrarySelection	$LibrarySource	$LibraryLayout	$InsertSize	$InsertDev	$Platform	$Model	$SRAStudy	$BioProject	$ProjectID	$Sample	$BioSample	$SampleType	$TaxID	$ScientificName	$SampleName	$Sex	$Tumor	$CenterName	$Submission	$Consent	$RunHash	$ReadHash\n";
+#$metadatos="";
 $Project_description="";
 	
 	print UTILIZADOS "$Experiment\n";
