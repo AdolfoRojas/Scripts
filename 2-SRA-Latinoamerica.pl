@@ -1,59 +1,78 @@
 #!/usr/bin/perl
-use strict;
-#system ("mkdir -p ../Temp");
-#system ("mkdir -p ../IDs");
-#system ("mkdir -p ../Resultados");
-#system ("rm ../Temp/*");
 
-#print "Pasos N°1 y N°2, Entrada de poblaciones y obtencion de IDs SRA\n\n";
-#while ($lugar=<>){
-#	chomp ($lugar);
-#open (LUGAR, ">../Temp/$lugar") or die "Error en escritura de IDs (lugares)";
-### Obtencion de IDs a partir del input
-#$datos = qx/esearch -db sra -query '$lugar AND Human [ORGN] AND public' | efetch -format docsum | xtract -pattern DocumentSummary -ACC \@acc -block DocumentSummary -element "&ACC"/;
-### Generar formato de lista para el Output
-#$datos=~ s/\t/\n/g;
-### Filtrar IDs que no sean del tipo SRX o ERX
-#$datos=~ s/[SDE]R[PZRAS]\d+\n//gi;
-#print "Procesando $lugar\t ";
-### Guardar IDs a un archivo correspondiente al Input
-#print LUGAR "$datos\n";
-#print " Finalizado\n\n";
-### Restaurar valor nulo de la Variaable en caso de no obtener resultados con el Input
-#$datos="";
-#close (LUGAR);}
+sub Directorios {
 
-### Eliminar IDs repetidas y generar archivo unico
-#system ("cat ../Temp/*|sort|uniq>../Temp/all.txt");
+system ("mkdir -p ../Temp");
+system ("mkdir -p ../IDs");
+system ("mkdir -p ../Resultados");
+system ("rm ../Temp/*");
+}
 
-#print "Recopilando IDs antiguas\n\n";
+#Directorios();
 
-#open (OLDS, ">../IDs/IDs_Antiguos");
-#open (TSV, "../Muestras.tsv"); #######################3333
-#while ($olds = <TSV>){
-#	chomp ($olds);
-#		if ($olds =~ /\t*["-]?([SE]RX\d+)"?/i){
-#			 $old_ID = $1; } else {
-#				$old_ID = "";}
-#			print OLDS "$old_ID\n";
-#	$old_ID=""; 
-#		}
-#close (OLDS);
-#close (TSV);
+sub Obtener_IDs {
 
-#system ("cat ../Temp/all.txt ../IDs/IDs_Antiguos | sort | uniq -u > ../IDs/IDs_Nuevos");
-#$IDs_Nuevos = qx/wc -l ..\/IDs\/IDs_Nuevos/;
-#chomp ($IDs_Nuevos);
-#print "$IDs_Nuevos\n\n";
 
-#open (SALIDA, ">../Temp/Salida.txt");
-### Obtener infromacion de las IDs recopiladas
-#$muestra= qx/epost -db sra -input ..\/IDs\/IDs_Nuevos -format acc | esummary -format runinfo -mode xml/;
-#print SALIDA "$muestra\n";
-#$muestra="";
-#close (SALIDA);
+print "Pasos N°1 y N°2, Entrada de poblaciones y obtencion de IDs SRA\n\n";
+while ($lugar=<>){
+	chomp ($lugar);
+open (LUGAR, ">../Temp/$lugar") or die "Error en escritura de IDs (lugares)";
+## Obtencion de IDs a partir del input
+$datos = qx/esearch -db sra -query '$lugar AND Human [ORGN] AND public' | efetch -format docsum | xtract -pattern DocumentSummary -ACC \@acc -block DocumentSummary -element "&ACC"/;
+## Generar formato de lista para el Output
+$datos=~ s/\t/\n/g;
+## Filtrar IDs que no sean del tipo SRX o ERX
+$datos=~ s/[SDE]R[PZRAS]\d+\n//gi;
+print "Procesando $lugar\t ";
+## Guardar IDs a un archivo correspondiente al Input
+print LUGAR "$datos\n";
+print " Finalizado\n\n";
+## Restaurar valor nulo de la Variaable en caso de no obtener resultados con el Input
+$datos="";
+close (LUGAR);}
+
+## Eliminar IDs repetidas y generar archivo unico
+system ("cat ../Temp/*|sort|uniq>../Temp/all.txt");
+}
+
+#Obtener_IDs();
+
+sub IDs_viejas {
+
+print "Recopilando IDs antiguas\n\n";
+
+open (OLDS, ">../IDs/IDs_Antiguos");
+open (TSV, "../Muestras.tsv"); #######################3333
+while ($olds = <TSV>){
+	chomp ($olds);
+		if ($olds =~ /\t*["-]?([SE]RX\d+)"?/i){
+			 $old_ID = $1; } else {
+				$old_ID = "";}
+			print OLDS "$old_ID\n";
+	$old_ID=""; 
+		}
+close (OLDS);
+close (TSV);
+
+system ("cat ../Temp/all.txt ../IDs/IDs_Antiguos | sort | uniq -u > ../IDs/IDs_Nuevos");
+$IDs_Nuevos = qx/wc -l ..\/IDs\/IDs_Nuevos/;
+chomp ($IDs_Nuevos);
+print "$IDs_Nuevos\n\n";
+
+open (SALIDA, ">../Temp/Salida.txt");
+## Obtener infromacion de las IDs recopiladas
+$muestra= qx/epost -db sra -input ..\/IDs\/IDs_Nuevos -format acc | esummary -format runinfo -mode xml/;
+print SALIDA "$muestra\n";
+$muestra="";
+close (SALIDA);
+
+}
+
+#IDs_viejas();
 
 print "Paso N°3 Filtrado preeliminar\n\n";
+
+sub Filtrado_preeliminar {
 
 open (INPUT, "../Temp/Salida.txt") or die "in";
 open (OUT, ">../Temp/Filtrados.txt") or die "Error Filtrado";
@@ -72,7 +91,11 @@ while ($datos=<INPUT>){
 close (INPUT);
 close (OUT);
 
+}
+
 print "Paso N°4 Extraccion de datos y metadatos; generacion de tabla\n\n";
+
+sub Extraccion_de_datos {
 
 open (TABLA, "../Temp/Filtrados.txt") or die "Error Tabla";
 open (SALIDA, ">>../Muestras.tsv");
@@ -208,6 +231,14 @@ $Project_description="";
 close (TABLA);
 close (SALIDA);
 close (UTILIZADOS);
-system ("sort Muestras.tsv | uniq > ../Resultados/Tabla_Muestras.tsv");
+
+system ("sort ../Muestras.tsv | uniq > ../Resultados/Tabla_Muestras.tsv");
 system ("wc -l ../Resultados/Tabla_Muestras.tsv");
-system ("less -S ../Resultados/Tabla_Muestras.tsv");
+
+}
+#system ("less -S ../Resultados/Tabla_Muestras.tsv");
+
+# Subrutinas
+
+Filtrado_preeliminar();
+Extraccion_de_datos();
