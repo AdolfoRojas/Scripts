@@ -93,16 +93,18 @@ close (OUT);
 
 }
 
-print "Paso N°4 Extraccion de datos y metadatos; generacion de tabla\n\n";
+Filtrado_preeliminar();
 
 sub Extraccion_de_datos {
+
+print "Paso N°4 Extraccion de datos y metadatos; generacion de tabla\n\n";
 
 open (TABLA, "../Temp/Filtrados.txt") or die "Error Tabla";
 open (SALIDA, ">>../Muestras.tsv");
 open (UTILIZADOS, ">>../IDs/IDs_Antiguos");
 $/="</Row>";
 ## Imprimir nombres de las Columnas
-print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots with mates	avgLength	Size(MB)	Dowload	Experiment	Library	Strategy	Selection	Source	Layout	InsertSize	InsertDev	Platform	Model	SRAstudy	Bioproject	ProjectID	Sample	BioSample	SampleType	TaxID	ScientificName	SampleName	Sex	Tumor	Center	Submission	Acceso	RunHash	ReadHash\n";
+print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots_with_mates	avgLength	Size(MB)	Dowload	Experiment	Library	Strategy	Selection	Source	Layout	InsertSize	InsertDev	Platform	Model	SRAstudy	Bioproject	ProjectID	Sample	BioSample	SampleType	TaxID	ScientificName	SampleName	Sex	Tumor	Center	Submission	Acceso	RunHash	ReadHash\n";
 	while ($objetos= <TABLA>){;
 		chomp ($objetos);
 	if ($objetos =~ /<Experiment>\s*["-]?(\w+\s*\w*)"?/i) {
@@ -236,9 +238,13 @@ system ("sort ../Muestras.tsv | uniq > ../Resultados/Tabla_Muestras.tsv");
 system ("wc -l ../Resultados/Tabla_Muestras.tsv");
 
 }
-#system ("less -S ../Resultados/Tabla_Muestras.tsv");
 
-# Subrutinas
-
-Filtrado_preeliminar();
 Extraccion_de_datos();
+
+sub Informe {
+
+system ("cut -d$'\t' -f 1,11,13,22,25 ../Resultados/Tabla_Muestras.tsv|sort|uniq>../Temp/Informe.tsv")
+
+}
+
+Informe();
