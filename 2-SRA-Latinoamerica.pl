@@ -243,7 +243,7 @@ Extraccion_de_datos();
 
 sub Informe {
 
-system ("cut -d$'\t' -f 1,11,13,22,25 ../Resultados/Tabla_Muestras.tsv|sort|uniq>../Temp/Informe.tsv")
+system ("cut -d$'\t' -f 1,11,13,22,25 ../Resultados/Tabla_Muestras.tsv|sort|uniq>../Temp/Informe.tsv");
 
 }
 
