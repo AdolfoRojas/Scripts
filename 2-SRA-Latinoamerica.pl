@@ -103,7 +103,7 @@ open (TABLA, "../Temp/Filtrados.txt") or die "Error Tabla";
 open (SALIDA, ">>../Muestras.tsv");
 open (UTILIZADOS, ">>../IDs/IDs_Antiguos");
 open (INFORME, ">../Informe.tsv");
-open (MUESTRAS, "../Temp/Filtrados.txt")
+open (MUESTRAS, "../Temp/Filtrados.txt");
 
 $/="</Row>";
 ## Imprimir nombres de las Columnas
