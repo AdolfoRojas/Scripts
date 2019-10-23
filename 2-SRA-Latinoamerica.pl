@@ -255,3 +255,21 @@ system ("sort ../Temp/Muestras.txt | uniq >../Resultados/WGS_WXS/Muestras.txt");
 }
 
 Informe();
+
+sub Get_sample_Metadata {
+
+open (SAMPLES, "../Resultados/WGS_WXS/Muestras.txt");
+open (METADATA, ">../Resultados/WGS_WXS/Muestras_Metadata.txt");
+local $/='\n';
+while($Met_in= <SAMPLES>){
+	chomp($Met_in);
+	$metadatos= qx/esearch -db biosample -query $Met_in | efetch -format docsum | xtract -pattern DocumentSummary -block Attribute -element Attribute/;
+	if ($metadatos =~ /sex\S>["-]?(\w+[^<])"?/i) {
+	      $Genero = $1; } else {
+ 			   $Genero = "";}
+				print METADATA "$Met_in	$Genero\n";
+}
+
+}
+
+Get_sample_Metadata();
