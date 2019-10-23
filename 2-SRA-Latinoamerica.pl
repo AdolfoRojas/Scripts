@@ -4,7 +4,7 @@ sub Directorios {
 
 system ("mkdir -p ../Temp");
 system ("mkdir -p ../IDs");
-system ("mkdir -p ../Resultados");
+system ("mkdir -p ../Resultados/WGS_WXS");
 system ("rm ../Temp/*");
 }
 
@@ -237,8 +237,8 @@ close (TABLA);
 close (SALIDA);
 close (UTILIZADOS);
 
-system ("sort ../Muestras.tsv | uniq > ../Resultados/Tabla_Muestras.tsv");
-system ("wc -l ../Resultados/Tabla_Muestras.tsv");
+system ("sort ../Muestras.tsv | uniq > ../Resultados/WGS_WXS/Tabla_Muestras.tsv");
+system ("wc -l ../Resultados/WGS_WXS/Tabla_Muestras.tsv");
 
 }
 
@@ -246,7 +246,7 @@ Extraccion_de_datos();
 
 sub Informe {
 
-system ("sort ../Informe.tsv | uniq >../Resultados/Informe.tsv");
+system ("sort ../Informe.tsv | uniq >../Resultados/WGS_WXS/Informe.tsv");
 
 }
 
