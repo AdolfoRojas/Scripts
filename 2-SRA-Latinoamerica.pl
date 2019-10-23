@@ -103,9 +103,12 @@ open (TABLA, "../Temp/Filtrados.txt") or die "Error Tabla";
 open (SALIDA, ">>../Muestras.tsv");
 open (UTILIZADOS, ">>../IDs/IDs_Antiguos");
 open (INFORME, ">../Informe.tsv");
+open (MUESTRAS, "../Temp/Filtrados.txt")
+
 $/="</Row>";
 ## Imprimir nombres de las Columnas
 print SALIDA "1_Run	ReleaseDate	LoadDate	AssemblyName	Spots	Bases	Spots_with_mates	avgLength	Size(MB)	Dowload	Experiment	Library	Strategy	Selection	Source	Layout	InsertSize	InsertDev	Platform	Model	SRAstudy	Bioproject	ProjectID	Sample	BioSample	SampleType	TaxID	ScientificName	SampleName	Sex	Tumor	Center	Submission	Acceso	RunHash	ReadHash\n";
+print MUESTRAS "1-BioSample\n";
 print INFORME "1-Run	1-Experiment	1-LibraryStrategy	1-BioProject	1-BioSample\n";
 	while ($objetos= <TABLA>){;
 		chomp ($objetos);
@@ -228,7 +231,7 @@ print INFORME "1-Run	1-Experiment	1-LibraryStrategy	1-BioProject	1-BioSample\n";
 					$ReadHash = "";}
 print SALIDA "$Run	$ReleaseDate	$LoadDate	$AssemblyName	$spots	$bases	$spots_with_mates	$avgLength	$size_MB	$download_path	$Experiment	$LibraryName	$LibraryStrategy	$LibrarySelection	$LibrarySource	$LibraryLayout	$InsertSize	$InsertDev	$Platform	$Model	$SRAStudy	$BioProject	$ProjectID	$Sample	$BioSample	$SampleType	$TaxID	$ScientificName	$SampleName	$Sex	$Tumor	$CenterName	$Submission	$Consent	$RunHash	$ReadHash\n";
 print INFORME "$Run	$Experiment	$LibraryStrategy	$BioProject	$BioSample\n";
-#$metadatos="";
+print MUESTRAS "$BioSample\n";
 $Project_description="";
 	
 print UTILIZADOS "$Experiment\n";
@@ -236,6 +239,8 @@ print UTILIZADOS "$Experiment\n";
 close (TABLA);
 close (SALIDA);
 close (UTILIZADOS);
+close (MUESTRAS);
+close (INFORME);
 
 system ("sort ../Muestras.tsv | uniq > ../Resultados/WGS_WXS/Tabla_Muestras.tsv");
 system ("wc -l ../Resultados/WGS_WXS/Tabla_Muestras.tsv");
