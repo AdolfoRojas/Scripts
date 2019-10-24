@@ -276,7 +276,7 @@ while ($Met_in= <SAMPLES>){
 	      $poblacion = $1; } else {  	
 			$poblacion = "";}}
 
-				print METADATA "$Met_in	$Genero	$descripcion\n";
+				print METADATA "$Met_in	$Genero	$poblacion	$descripcion\n";
 }
 
 }
