@@ -270,6 +270,11 @@ while ($Met_in= <SAMPLES>){
 	if ($metadatos =~ /description\">["-]?([^<]*)"?/i) {
 	      $descripcion = $1; } else {
 			$descripcion = "";}
+	if ($metadatos =~ /population\">["-]?([^<]*)"?/i) {
+	      $poblacion = $1; } else {
+			if ($metadatos =~ /ethnicity\">["-]?([^<]*)"?/i) {
+	      $poblacion = $1; } else {  	
+			$poblacion = "";}}
 
 				print METADATA "$Met_in	$Genero	$descripcion\n";
 }
