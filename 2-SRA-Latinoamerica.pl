@@ -93,7 +93,7 @@ close (OUT);
 
 }
 
-Filtrado_preeliminar();
+#Filtrado_preeliminar();
 
 sub Extraccion_de_datos {
 
@@ -246,7 +246,7 @@ system ("wc -l ../Resultados/WGS_WXS/Tabla_Muestras.tsv");
 
 }
 
-Extraccion_de_datos();
+#Extraccion_de_datos();
 
 sub Informe {
 
@@ -260,14 +260,18 @@ sub Get_sample_Metadata {
 
 open (SAMPLES, "../Resultados/WGS_WXS/Muestras.txt");
 open (METADATA, ">../Resultados/WGS_WXS/Muestras_Metadata.txt");
-local $/='\n';
-while($Met_in= <SAMPLES>){
+
+while ($Met_in= <SAMPLES>){
 	chomp($Met_in);
-	$metadatos= qx/esearch -db biosample -query $Met_in | efetch -format docsum | xtract -pattern DocumentSummary -block Attribute -element Attribute/;
-	if ($metadatos =~ /sex\S>["-]?(\w+[^<])"?/i) {
+	$metadatos= qx/esearch -db biosample -query $Met_in | efetch -format docsum/;
+	if ($metadatos =~ /sex\">["-]?(\w*[^<])"?/i) {
 	      $Genero = $1; } else {
  			   $Genero = "";}
-				print METADATA "$Met_in	$Genero\n";
+	if ($metadatos =~ /description\">["-]?([^<]*)"?/i) {
+	      $descripcion = $1; } else {
+			$descripcion = "";}
+
+				print METADATA "$Met_in	$Genero	$descripcion\n";
 }
 
 }
