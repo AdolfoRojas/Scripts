@@ -37,7 +37,7 @@ while ($ID_Ensembl=<VALIDADOS>) {
 close (VALIDADOS);
 close (SALIDA1);
 }
-#GO_Validados();
+GO_Validados();
 
 sub GO_Predichos {
 open (ENTRADA2, ">Predichos.in");
@@ -72,18 +72,3 @@ close (SALIDA2);
 }
 
 GO_Predichos();
-
-
-
-
-##KEGG
-#curl http://rest.kegg.jp/find/genes/DVL3 | grep -oE "hsa:[0-9]+"
-#curl http://rest.kegg.jp/get/hsa:1857
-
-# Tarbase
-
-#grep Tarbase 423-*p.csv |sort | uniq | cut -d , -f 1 | grep -Eo "[A-Z]+[0-9]+" > 423_validados.in
-
-#esearch -db gene -query $ID_Ensembl | efetch -format docsum | grep Id | grep -Eo "[0-9]+" # Se obtien Gene ID para busqueda en KEGG
-
-
