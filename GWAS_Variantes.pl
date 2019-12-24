@@ -50,3 +50,6 @@ while ($RS_ID=<VALIDADOS>) {
     $Cancer="";
     }
 close (VALIDADOS);
+close (SALIDA1);
+}
+GO_Validados();
