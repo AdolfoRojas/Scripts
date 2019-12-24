@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-qx/screen -d -R GWAS/;
-
 sub Directorios {
 
 system ("mkdir -p ../Temp");
@@ -20,15 +18,15 @@ $Col = <>;
 chomp ($Col);
 
 sub GO_Validados {
-open (ENTRADA1, ">../Temp/$Name.in");
+open (ENTRADA1, ">../Temp/GWAS.in");
 qx/chmod a+r $Name/;
-$Entrada= qx/grep $Name | cut -d$\'\t' -f $Col | grep -Eo "rs[0-9]+" | sort | uniq/;
+$Entrada= qx/cut -d$\'\t' -f $Col $Name  | grep -Eo "rs[0-9]+" | sort | uniq/;
 print ENTRADA1 "$Entrada";
 close(ENTRADA1);
 
-open (VALIDADOS, "../Temp/$Name.in");
-open (SALIDA1, ">../Resultados/GWAS/$Name.tsv");
-print SALIDA1 "CancerRelated?\tGeneID\tGeneName\tPathways->\n";
+open (VALIDADOS, "../Temp/GWAS.in");
+open (SALIDA1, ">../Resultados/GWAS/GWAS.tsv");
+print SALIDA1 "CancerRelated?\trs_ID\tGeneID\tGeneName\tPathways->\n";
 while ($RS_ID=<VALIDADOS>) {
     chomp ($RS_ID);
     $Data1 = qx/esearch -db snp -query $RS_ID | efetch -format docsum | xtract -pattern DocumentSummary -element GENE_ID NAME | uniq/;
@@ -46,7 +44,7 @@ while ($RS_ID=<VALIDADOS>) {
             $Cancer= "NA";
         }
     }
-    print SALIDA1 "$Cancer\t$Gene_ID[0]\t$Gene_ID[1]\t$KEGG_data_GO\n";
+    print SALIDA1 "$Cancer\t$RS_ID\t$Gene_ID[0]\t$Gene_ID[1]\t$KEGG_data_GO\n";
     $Cancer="";
     }
 close (VALIDADOS);
