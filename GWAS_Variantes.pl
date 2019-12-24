@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+qx/screen -d -R GWAS/;
+
 sub Directorios {
 
 system ("mkdir -p ../Temp");
