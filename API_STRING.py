@@ -1,115 +1,102 @@
-#!/usr/bin/env python3.8  
+#!/usr/bin/env python3
 ##################################################################
 import sys
 sys.path.append("/usr/local/lib/python2.7/dist-packages")
 from Bio import Entrez
 import re 
 import requests ## python -m pip install requests
-from gprofiler import GProfiler
 ##################################################################
 
-rs_ID = input("Inserte rs: ")
-### a rs10953105 tiene 2 genes uno codificante y el otro no codificante
-Entrez.email = "adolfo.rh@postqyf.uchile.cl" 
-handle = Entrez.efetch(db="snp", id=rs_ID, retmode="text")
-Variant_Type = "N.A."
-NAME = list()
-GENE_ID = list()
-for element in handle.readline().strip().split("<"):
-    if re.match("SNP_CLASS>\w+", element):
-        Variant_Type = element.replace("SNP_CLASS>", "")
-    if re.match("NAME>\w+", element):
-        NAME1 = element.replace("NAME>", "")
-        NAME.append(NAME1)
-    if re.match("GENE_ID>\w+", element):
-        GENE_ID1 = element.replace("GENE_ID>", "")
-        GENE_ID.append(GENE_ID1)
-if len(GENE_ID) == 2:
-    print("\t".join([Variant_Type, GENE_ID[0], NAME[0], GENE_ID[1], NAME[1]]))
-elif len(GENE_ID) == 1:
-    print("\t".join([Variant_Type, GENE_ID[0], NAME[0]]))
-elif len(GENE_ID) > 2:
-    print("Revisar script, aumentar capacidad de busquenda a " + len(GENE_ID))
-elif len(GENE_ID) == 0:
-    print(rs_ID + " no presenta un gen asociado en dbSNP buscar en otras bases de datos")
-handle.close() 
+#####rs_ID = input("Inserte rs: ")
+def Gene_anotation():
+    file1 = open(input("Lista de SNP: "), 'r')
+    file2 = open('Genes_afectados.tsv', 'w+')
+    file2.write("Rs\tTipo de Polimorfismo\tN°_de _genes\tGenes afectados\n")
+    Lines = file1.readlines()
+    Lines = [w.replace('\n', '') for w in Lines]
+    print(str(len(Lines)) + " Variantes geneticas a buscar")
+    count = 0
+    for line in Lines:        
+        count+=1
+        print(str(count/len(Lines)*100)+"% de Variantes buscadas ("+ str(count) +" de " + str(len(Lines)) + ")")
+        Entrez.email = "adolfo.rh@postqyf.uchile.cl" 
+        handle = Entrez.efetch(db="snp", id=line, retmode="text")
+        Variant_Type = "N.A."
+        NAME = list()
+        GENE_ID = list()    
+        for element in handle.readline().strip().split("<"):
+            if re.match("SNP_CLASS>\w+", element):
+                Variant_Type = element.replace("SNP_CLASS>", "")
+            if re.match("NAME>\w+", element):
+                NAME1 = element.replace("NAME>", "")
+                NAME.append(NAME1)
+            if re.match("GENE_ID>\w+", element):
+                GENE_ID1 = element.replace("GENE_ID>", "")
+                GENE_ID.append(GENE_ID1)
+        if len(GENE_ID) > 0:
+            file2.write("\t".join([line, Variant_Type, str(len(GENE_ID)), str(NAME)]) + '\n')                
+        elif len(GENE_ID) == 0:
+            file2.write(line + "\t" + Variant_Type + "\t" + "¿Intergenico?, no presenta un gen asociado en dbSNP" + '\n')
+        handle.close() 
+#Gene_anotation()
 
 ##############################  STRING  #########################################
 
-if len(NAME) != 0:
-   
-    string_api_url = "https://string-db.org/api"
-    output_format = "tsv"
-    method = "interaction_partners" 
+def STRING():
+    
+    file3 = open('Genes_afectados.tsv', 'r')    
+    file4 = open('Interacciones_encontradas.tsv', 'w')    
+    file4.write("Rs\tN°_Interactores\tInteracciones_sobre_0.7\n") ### Nombre de los encabezados de las columnas
+    Lines2 = file3.readlines()[1:]
+    print(str(len(Lines2)) + " Variantes geneticas a buscar")
+    count2 =0
+    for line in Lines2:
+        l1 = line.strip().split("\t")
+        count2 +=1
+        print(str(count2/len(Lines2)*100)+"% de potenciales interacciones buscadas ("+ str(count2) +" de " + str(len(Lines2)) + ")")       
+        if len(l1) <2: #len(l1) <4
+            continue 
+        #Number_Genes = l1[2]  #Number_Genes = l1[2]      
+        NAME = l1[1] #NAME = l1[3]
+        Rs = l1[0]  #Rs = l1[0]           
+        string_api_url = "https://string-db.org/api"
+        output_format = "tsv"
+        method = "interaction_partners" 
 
-    request_url = "/".join([string_api_url, output_format, method]) ## Construct URL
-
-    my_genes = list()
-    params = {}
-    my_genes = NAME[0]
-    params = {
-    "identifiers" : my_genes, # your protein
-    "species" : 9606, # species NCBI identifier 
-    "required_score" : 700
-    }
-    if len(NAME) == 2:
-        my_genes = [NAME[0], NAME[1]]
+        request_url = "/".join([string_api_url, output_format, method]) ## Construct URL
+        NAME = NAME.replace("[", "")
+        NAME = NAME.replace("]", "")
+        NAME = NAME.replace("'", "")        
+        my_genes = NAME.split(", ")
+        params = {}        
         params = {
         "identifiers" : "%0d".join(my_genes), # your protein
         "species" : 9606, # species NCBI identifier 
-        "required_score" : 700
-        }
-                   
-    print(my_genes)
-    print(len(NAME))
- 
-    response = requests.post(request_url, data=params) ## Call STRING
+        #"required_score" : 700
+        }              
+        response = requests.post(request_url, data=params) ## Call STRING
     
-    Interactors= list()
+        Interactors= list()
+        count3 = 0
+        interaction = list()
+        partner_name = "N.A."        
+        for line in response.text.strip().split("\n")[1:]:  #[1:] evita que se impriman los encabezados
+            try:
+                l = line.strip().split("\t")                   
+                query_name = l[2]                                
+                partner_name = l[3]                
+                combined_score = l[5]
+                output = (query_name + "-" + partner_name +"(" + combined_score +")")
+                interaction.append(output)                
+                if partner_name != None:
+                    Interactors.append(partner_name)                               
+            except:
+                pass
+                output = "Genes no encontrados en STRING (¿ncRNAs?)"
+                interaction.append(output)  
 
-    for line in response.text.strip().split("\n"):
-        try:
-            l = line.strip().split("\t")
-            query_ensp = l[0]
-            query_name = l[2]
-            partner_ensp = l[1]
-            partner_name = l[3]
-            combined_score = l[5]
-            print("\t".join([query_ensp, query_name, partner_name, combined_score]))
-            if partner_name != None:
-                Interactors.append(partner_name)
-        except:
-            pass
-            print("Not found in String")
-    print (len(Interactors[1:]))
-
-    with open(rs_ID+'_interactors.txt', 'w') as interactors:
-        for item in Interactors[1:]:
-            interactors.write("%s\n" % item)
-    interactors.close()
-
-    query_range = list()
-
-    pathways_interactors = list()
-
-    for i in range(1, len(Interactors)):
-        query_range.append("Query"+str(i))
-    
-    d = dict( zip( Interactors[1:], Interactors[1:]))
-    pathways_interactors_out= open(rs_ID+".tsv","w+")
-    gp = GProfiler(return_dataframe=True)
-    pathways_interactors= gp.profile(organism = 'hsapiens',
-            query = Interactors[1:], combined = False, no_iea = True, ordered = True, sources = ["GO:MF","REAC"])     
-    pathways_interactors.to_csv(pathways_interactors_out, sep = "\t")
-    pathways_interactors_out.close()
-
-    #pathways_interactors_out2= open(rs_ID+"_full.tsv","w+")
-    #gp = GProfiler(return_dataframe=True)
-    #pathways_interactors2= gp.profile(organism = 'hsapiens',
-    #        query = Interactors[1:])
-    #pathways_interactors2.to_csv(pathways_interactors_out2, sep = "\t")
-    #pathways_interactors_out2.close()
-
-
-
-    
+        #print(Rs + " " + str(len(Interactors)) + " Interactores encontrados" + "\n")
+        interaction = str(interaction)
+        interaction = interaction.replace("\n", ";") 
+        file4.write(Rs + "\t" + str(len(Interactors)) + "\t" + interaction + "\n")
+STRING()    

@@ -37,7 +37,7 @@ while ($ID_Ensembl=<VALIDADOS>) {
 close (VALIDADOS);
 close (SALIDA1);
 }
-GO_Validados();
+#GO_Validados();
 
 sub GO_Predichos {
 open (ENTRADA2, ">Predichos.in");
@@ -71,4 +71,38 @@ close (PREDICHOS);
 close (SALIDA2);
 }
 
-GO_Predichos();
+#GO_Predichos();
+
+sub GO_Validados_mirtarbase {
+open (ENTRADA1, ">Validados.in");
+qx/chmod a+r *tsv/;
+$Entrada= qx/cut -d$\'\t' -f 1,4,5 *.tsv |sort | uniq/;
+print ENTRADA1 "$Entrada";
+close(ENTRADA1);
+
+open (VALIDADOS, "Validados.in");
+open (SALIDA1, ">$Name\_validated_targets_miRTarbase.tsv");
+print SALIDA1 "CancerRelated?\tGeneID\tGeneName\tmiRTarbaseID\tPathways->\n";
+while ($IDs=<VALIDADOS>) {
+    chomp ($IDs);
+    @Gene_ID2= split(/\s+/,$IDs);
+    $KEGG_data_GO2 = qx/curl http:\/\/rest.kegg.jp\/get\/hsa:$Gene_ID2[2] | grep -Eo "hsa[0-9]+[^\]]+"/;
+    $KEGG_data_GO2=~ s/\n/\t/ig;
+    $KEGG_data_GO2=~ s/hsa[0-9]+\t//ig;
+    if ($KEGG_data_GO2=~ m/hsa052[0-9][0-9]/ig){
+        $Cancer= "Yes";
+    }else{
+        if ($KEGG_data_GO2=~ m/hsa\w+/ig){
+            $Cancer= "No";
+        } else {
+            $Cancer= "NA";
+        }
+    }
+    print SALIDA1 "$Cancer\t$Gene_ID2[2]\t$Gene_ID2[1]\t$Gene_ID2[0]\t$KEGG_data_GO2\n";
+    $Cancer="";
+    }
+close (VALIDADOS);
+close (SALIDA1);
+}
+
+GO_Validados_mirtarbase();
