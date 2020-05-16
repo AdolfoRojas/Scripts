@@ -1,0 +1,3 @@
+id	filename	md5	size	state
+f5485bf0-138c-4630-bc42-4e9430d7b67c	AQUAE_p_TCGA_112_304_b2_N_GenomeWideSNP_6_D10_1348300.hg19.seg.txt	ac321fdb769e1e9cbef0f0cf1abfd7b4	30585	live
+72696f81-2171-4ebc-957c-9c9a15b70a91	AQUAE_p_TCGA_112_304_b2_N_GenomeWideSNP_6_D02_1348388.hg19.seg.txt	fae149a0fea4953f26d770bef29d5647	38496	live
