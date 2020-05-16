@@ -1,8 +1,9 @@
 library(TCGAbiolinks)
 library(ggplot2)
-library(dplyr)
-setwd("C:/Users/adolf/AppData/Local/Packages/CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc/LocalState/rootfs/home/adolf/Tesis")
-
+require(moonBook)
+require(webr)
+library(pdftools)
+setwd("../Tesis")
 #-----------------------------------------------------------------------------------------------------------------------------------------#
 
 file <- "TCGA_ID_MAP_BRCA.csv"
@@ -34,11 +35,10 @@ Sample_type_Metastatic <- data.frame(AliquotBarcode = Metastatic, sample_type = 
 sample_Type <- rbind(Sample_type_Primary_tumors, Sample_type_Metastatic, Sample_type_Normal_solid_tissue)
 
 Original_file <- as.data.frame(merge(Original_file, Reduced_Tissue_Source_Site, by = "TSS")) #             Problema
-length(unique(Original_file$patient))
+
 Original_file <- as.data.frame(merge(Original_file, sample_Type, by = "AliquotBarcode"))
 length(unique(Original_file$patient))
-Original_file <- as.data.frame(merge(Original_file, Reduced_Clinical_data_BrCa, by = "patient"))
-length(unique(Original_file$patient))
+Original_file <- as.data.frame(merge(Original_file, Reduced_Clinical_data_BrCa, by = "patient")) # 1256 M, 1095 P.
 
 Reduced_Original_file <- Original_file[c(1,2,4,7:12)]
 Reduced_Original_file$CGHubAnalysisID <- paste(Reduced_Original_file$sample_type, Reduced_Original_file$CGHubAnalysisID, sep = "_")
@@ -46,10 +46,11 @@ Reduced_Original_file$CGHubAnalysisID <- paste(Reduced_Original_file$sample_type
 Subtype_BCa <- TCGAquery_subtype(tumor = "brca") #Retrieve molecular subtypes for a given tumor
 Reduced_Subtype_BCa <- Subtype_BCa[c(1,9,12)]
 
-df <- as.data.frame(merge(Reduced_Original_file, Reduced_Subtype_BCa, by = "patient"))
-length(unique(df$patient))
+df <- as.data.frame(merge(Reduced_Original_file, Reduced_Subtype_BCa, by = "patient")) # 1243M, 1083 P
 df <- df[c(1:3,9,5,6,10,11,4,7,8)]
-df <- df[ which(df$gender=='female'), ]
+df <- df[ which(df$gender=='female'), ] # 1241 M, 1082 P
+df <- df[ which(df$sample_type !='TM'), ] # 1234 M, 1082 P
+length(unique(df$patient))
 
 write.table(df, sep = "\t",
             file = "Samples_Subtype_BCa.tsv", 
@@ -62,8 +63,8 @@ remove(Subtype_BCa)
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------#
 
-file <- "Samples_Subtype_BCa.tsv"
-df<- read.table(file, header=T, sep = "\t")
+file2 <- "Samples_Subtype_BCa.tsv"
+df<- read.table(file2, header=T, sep = "\t")
 df$BRCA_Subtype_PAM50 <- as.factor(df$BRCA_Subtype_PAM50)
 
 # Cuantificar subtipos
@@ -179,92 +180,45 @@ remove(Counts)
 
 
 #---------------------------------------------------------------------------------------------------------------------------------------------#
-file3 <- "Tab_counts_procesado.tab"
-Counts2 <- as.data.frame(read.table(file3, header=T, sep = "\t"))
+library(ggplot2)
+require(moonBook)
+require(webr)
+library(pdftools)
+setwd("../Tesis")
+file2 <- "Samples_Subtype_BCa.tsv"
 
+df_plot1 <- read.table(file2, header=T, sep = "\t")
+df_plot1 <- df_plot1[ which(df_plot1$BRCA_Subtype_PAM50!='Normal'), ] # 1192 M, 1042 P
+write.table(df_plot1, sep = "\t",
+            file = "df_plot1", 
+            row.names = F, quote = F, col.names = T)
+df_plot1 <- read.table("df_plot1", header=T, sep = "\t")
+levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "LumA"] <- "Luminal A"
+levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "LumB"] <- "Luminal B"
+levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "Her2"] <- "HER2"
+length(unique(df_plot1$patient))
+pdf("df_plot1.pdf", height = 8.5, width = 8.5)
+PieDonut(df_plot1,aes(pies=BRCA_Subtype_PAM50,donuts=sample_type), title="Subtipos tumorales", ratioByGroup=FALSE, showPieName=FALSE, r0=0, labelpositionThreshold = 0.5, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 5, donutLabelSize = 5)
+dev.off()
+bitmap <- pdf_render_page("df_plot1.pdf", page = 1, dpi = 300)
+png::writePNG(bitmap, "df_plot1.png")
+unlink("df_plot1.pdf")
+unlink("df_plot1")
+remove(df_plot1)
 
-summary(Original_file$patient)
+#---------------------------------------------------------------------------------------------------------------------------------------------#
 
-
-
-# Retrieve multiple tissue types  NOT FROM THE SAME PATIENTS
-SS <- TCGAquery_SampleTypes(bar,c("TP","NB"))
-
-# Retrieve multiple tissue types  FROM THE SAME PATIENTS
-SSS <- TCGAquery_MatchedCoupledSampleTypes(bar,c("NT","TP"))
-
-metadata <- colDataPrepare(dataSubt$patient)
-
-metadata <- colDataPrepare(Original_file$AliquotBarcode)
-summary <- getSampleFilesSummary("TCGA-BRCA") #Retrieve summary of files per sample in a project
-
-query <- GDCquery(project = "TCGA-BRCA",
-                  data.category = "Transcriptome Profiling",
-                  data.type = "Gene Expression Quantification",
-                  workflow.type = "HTSeq - Counts")
-results <- getResults(query)
-Manifest<-getManifest(query)
-
-query2 <- GDCquery(project = "TCGA-BRCA",
-                  data.category = "Transcriptome Profiling",
-                  data.type = "miRNA Expression Quantification",
-                  experimental.strategy = "miRNA-Seq",
-                  barcode = "TCGA-AO-A0JF-01A-11R-A057-13")
-
-results2 <- getResults(query2)
-
-
-# You can define a list of samples to query and download providing relative TCGA barcodes.
-listSamples <- c("TCGA-E9-A1NG-11A-52R-A14M-07")
-
-# Query platform Illumina HiSeq with a list of barcode 
-query <- GDCquery(project = "TCGA-BRCA", 
-                  data.category = "Transcriptome Profiling",
-                  data.type = "Gene Expression Quantification",
-                  experimental.strategy = "RNA-Seq",
-                  workflow.type = "HTSeq - Counts",
-                  barcode = "TCGA-E9-A1NG-11A-52R-A14M-07")
-
- # Download a list of barcodes with platform IlluminaHiSeq_RNASeqV2
-GDCdownload(query2)
-
-# Prepare expression matrix with geneID in the rows and samples (barcode) in the columns
-# rsem.genes.results as values
-BRCARnaseqSE <- GDCprepare(query)
-
-BRCAMatrix <- assay(BRCARnaseqSE,"raw_count") # or BRCAMatrix <- assay(BRCARnaseqSE,"raw_count")
-
-
-query <- GDCquery(project = "TCGA-ACC",
-                  data.category =  "Copy number variation",
-                  legacy = TRUE,
-                  file.type = "hg19.seg",
-                  barcode = c("TCGA-OR-A5LR-01A-11D-A29H-01", "TCGA-OR-A5LJ-10A-01D-A29K-01"))
-# data will be saved in  GDCdata/TCGA-ACC/legacy/Copy_number_variation/Copy_number_segmentation
-GDCdownload(query, method = "client")
-
-
-
-
-
-data <- data.frame(
-  Group=row.names(Subtype_BCa_df),
-  value=Subtype_BCa_df$Total
-)
-
-# Compute the position of labels
-data <- data %>% 
-  arrange(desc(Group)) %>%
-  mutate(prop = value / sum(data$value) *100) %>%
-  mutate(ypos = cumsum(prop)- 0.5*prop )
-
-# Basic piechart
-ggplot(data, aes(x="", y=prop, fill=Group)) +
-  geom_bar(stat="identity", width=1, color="white") +
-  coord_polar("y", start=0) +
-  theme_void() + 
-  #theme(legend.position="none") +
-  
-  geom_text(aes(y = ypos, label = ypos+Group), color = "white", size=6) +
-  scale_fill_brewer(palette="Set1")
-
+df_plot2 <- read.table(file2, header=T, sep = "\t")
+pdf("df_plot2.pdf", height = 8.5, width = 8.5)
+PieDonut(df_plot2,aes(pies=gender,donuts=race),showPieName=FALSE, title ="Distribución según raza", r0=0.2, r1 = 0.2, r2 = 0.4, start=5.9*pi/2, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.0001), labelpositionThreshold=0.5, titlesize = 15, donutLabelSize = 6, addPieLabel = FALSE, pieLabelSize = 0, showRatioPie = F)
+dev.off()
+df_plot2 <- df_plot2[ which(df_plot2$sample_type=='NT'), ] # 112 pacientes 112 Muestras iguales, son 113 elementos ya que se tiene una muestra con 2 analisis
+write.table(df_plot2, sep = "\t",
+            file = "df_plot2", 
+            row.names = F, quote = F, col.names = T)
+df_plot2 <- read.table("df_plot2", header=T, sep = "\t")
+bitmap <- pdf_render_page("df_plot2.pdf", page = 1, dpi = 300)
+png::writePNG(bitmap, "df_plot2.png")
+unlink("df_plot2.pdf")
+unlink("df_plot2")
+remove(df_plot2)
