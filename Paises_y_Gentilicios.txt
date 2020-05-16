@@ -1,0 +1,49 @@
+Argentina
+Argentinian
+Bolivia
+Bolivian
+Brazil
+Brazilian
+Chile
+Chilean
+Colombia
+Colombian
+Costa Rica
+Costa Rican
+Cuba
+Cuban
+Dominican Republic
+Dominican
+Ecuador
+Ecuadorian
+El Salvador
+Salvadoran
+French Guiana
+Guadeloupe
+Guatemala
+Guatemalan
+Haiti
+Haitian
+Honduras
+Honduran
+Martinique
+Mexico
+Mexican
+Nicaragua
+Nicaraguan
+Panama
+Panamanian
+Paraguay
+Paraguayan
+Peru
+Peruvian
+Puerto Rico
+Puerto Rican
+Saint Barthelemy
+Saint Martin
+Uruguay
+Uruguayan
+Venezuela
+Venezuelan
+Latin
+Latino
