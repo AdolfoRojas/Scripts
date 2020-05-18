@@ -84,6 +84,21 @@ write.table(Basal_counts, sep = "\t",
             file = "Basal_counts.tab", 
             row.names = F, quote = F, col.names = T)
 
+Normal <- df[ which(df$BRCA_Subtype_PAM50=='Normal'), ]
+Normal_Cols <- c()
+for (AnalysisID in Normal$CGHubAnalysisID) {
+  names(Counts)[grep(substr(AnalysisID, start = 4 , stop = 11 ), names(Counts))] <- AnalysisID
+  loop <- (grep(AnalysisID, names(Counts)))
+  Normal_Cols <- append(Normal_Cols, loop)
+}
+Normal_counts <- Counts[Normal_Cols]
+Normal_counts <- cbind(Counts$X, Normal_counts)
+names(Normal_counts)[names(Normal_counts) == "Counts$X"] <- "Transcripts"
+Number_Normal <- data.frame(Total = nrow(subset(Normal, grepl("Normal",Basal$BRCA_Subtype_PAM50))), 	PRIMARY_SOLID_TUMOR = nrow(subset(Normal, grepl("TP",Normal$sample_type))), 	Metastatic = nrow(subset(Normal, grepl("TM",Normal$sample_type))), Solid_Tissue_Normal = nrow(subset(Normal, grepl("NT",Normal$sample_type))), Unique_Patients =  length(unique(Normal$patient)), row.names = "Normal")
+write.table(Normal_counts, sep = "\t",
+            file = "Normal_counts.tab", 
+            row.names = F, quote = F, col.names = T)
+
 # Cuantificar subtipos
 
 Subtype_BCa_df <- rbind(Number_LumA, Number_LumB, Number_Her2, Number_Basal) 
