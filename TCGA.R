@@ -222,3 +222,98 @@ png::writePNG(bitmap, "df_plot2.png")
 unlink("df_plot2.pdf")
 unlink("df_plot2")
 remove(df_plot2)
+
+#---------------------------------------------------------------------------------------------------------------------------------------------#
+
+file2 <- "Samples_Subtype_BCa.tsv"
+df_plot3 <- read.table(file2, header=T, sep = "\t")
+data <- data.frame(individual=character(),
+                   group=character(), 
+                   value=character(), 
+                   stringsAsFactors=FALSE) 
+
+for (Race in levels(df_plot3$race)) {
+  df_loop1 <- df_plot3[ which(df_plot3$race==Race), ]
+  for (Etnia in levels(df_loop1$ethnicity)) {
+    df_loop2 <- df_loop1[ which(df_loop1$ethnicity==Etnia), ]
+    freq <- nrow(df_loop2)
+    data = rbind(data, data.frame(Etnia,Race,freq, fix.empty.names = F))
+  }
+  for (Type_sample in levels(df_loop1$sample_type)) {
+    df_loop2 <- df_loop1[ which(df_loop1$sample_type==Type_sample), ]
+    freq <- nrow(df_loop2)
+    data = rbind(data, data.frame(Type_sample,Race,freq, fix.empty.names = F))
+  }
+}
+Total = data.frame(individual=character())
+for (n in levels(df_plot3$ethnicity)) {
+  df_loop3 <- df_plot3[ which(df_plot3$ethnicity==n), ]
+  Total = rbind(Total, data.frame(n, nrow(df_loop3), fix.empty.names = F))
+}
+for (n in levels(df_plot3$sample_type)) {
+  df_loop3 <- df_plot3[ which(df_plot3$sample_type==n), ]
+  Total = rbind(Total, data.frame(n, nrow(df_loop3), fix.empty.names = F))
+}
+colnames(Total) <- c("Etnia o tipo de muestra", "n")
+colnames(data) <- c("Etnia o tipo de muestra", "Raza", "Proporción")
+data <- as.data.frame(merge(data, Total, by = "Etnia o tipo de muestra"))
+
+pdf("df_plot3.pdf", height = 8.5, width = 11)
+ggplot(data, aes(fill=Raza, y=Proporción, x=`Etnia o tipo de muestra`)) + 
+  geom_bar(position="fill", stat="identity")+ 
+  ggtitle("Distribución de Raza, según etnia y tipo de muestra") +
+  geom_text(data=data, aes(x=`Etnia o tipo de muestra`, y= rep(1.02, length(`Etnia o tipo de muestra`)), label=paste("n =", as.factor(n), sep = " "))) 
+dev.off()
+bitmap <- pdf_render_page("df_plot3.pdf", page = 1, dpi = 300)
+png::writePNG(bitmap, "df_plot3.png")
+unlink("df_plot3.pdf")
+unlink("df_plot3")
+
+#---------------------------------------------------------------------------------------------------------------------------------------------#
+
+file2 <- "Samples_Subtype_BCa.tsv"
+df_plot3 <- read.table(file2, header=T, sep = "\t")
+data <- data.frame(individual=character(),
+                   group=character(), 
+                   value=character(), 
+                   stringsAsFactors=FALSE) 
+
+for (Race in levels(df_plot3$primary_diagnosis)) {
+  df_loop1 <- df_plot3[ which(df_plot3$primary_diagnosis==Race), ]
+  for (Etnia in levels(df_loop1$pathologic_stage)) {
+    df_loop2 <- df_loop1[ which(df_loop1$pathologic_stage==Etnia), ]
+    freq <- nrow(df_loop2)
+    data = rbind(data, data.frame(Etnia,Race,freq, fix.empty.names = F))
+  }
+  for (Type_sample in levels(df_loop1$sample_type)) {
+    df_loop2 <- df_loop1[ which(df_loop1$sample_type==Type_sample), ]
+    freq <- nrow(df_loop2)
+    data = rbind(data, data.frame(Type_sample,Race,freq, fix.empty.names = F))
+  }
+}
+Total = data.frame(individual=character())
+for (n in levels(df_plot3$pathologic_stage)) {
+  df_loop3 <- df_plot3[ which(df_plot3$pathologic_stage==n), ]
+  Total = rbind(Total, data.frame(n, nrow(df_loop3), fix.empty.names = F))
+}
+for (n in levels(df_plot3$sample_type)) {
+  df_loop3 <- df_plot3[ which(df_plot3$sample_type==n), ]
+  Total = rbind(Total, data.frame(n, nrow(df_loop3), fix.empty.names = F))
+}
+colnames(Total) <- c("Etapa o tipo de muestra", "n")
+colnames(data) <- c("Etapa o tipo de muestra", "Diagnóstico", "Proporción")
+data <- as.data.frame(merge(data, Total, by = "Etapa o tipo de muestra"))
+
+pdf("df_plot4.pdf", height = 8.5, width = 13)
+ggplot(data, aes(fill=Diagnóstico, y=Proporción, x=`Etapa o tipo de muestra`)) + 
+  geom_bar(position="fill", stat="identity")+ 
+  ggtitle("Distribución de diagnostico, según Etapa y tipo de muestra") +
+  geom_text(data=data, aes(x=`Etapa o tipo de muestra`, y= rep(1.02, length(`Etapa o tipo de muestra`)), label=paste("n =", as.factor(n), sep = " "))) 
+dev.off()
+bitmap <- pdf_render_page("df_plot4.pdf", page = 1, dpi = 300)
+png::writePNG(bitmap, "df_plot4.png")
+unlink("df_plot4.pdf")
+unlink("df_plot4")
+
+
+
