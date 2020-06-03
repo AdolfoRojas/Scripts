@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-setwd("C:/Users/adolf/AppData/Local/Packages/CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc/LocalState/rootfs/home/adolf/Tesis")
+setwd("../Tesis")
 Subtype_file <- "Samples_Subtype_BCa.tsv"
 df<- read.table(Subtype_file, header=T, sep = "\t")
 df$BRCA_Subtype_PAM50 <- as.factor(df$BRCA_Subtype_PAM50)
