@@ -81,7 +81,7 @@ levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "LumB
 levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "Her2"] <- "HER2"
 length(unique(df_plot1$patient))
 pdf("df_plot1.pdf", height = 8.5, width = 8.5)
-PieDonut(df_plot1,aes(pies=BRCA_Subtype_PAM50,donuts=sample_type), title="Subtipos tumorales", ratioByGroup=FALSE, showPieName=FALSE, r0=0, labelpositionThreshold = 0.5, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 5, donutLabelSize = 5)
+PieDonut(df_plot1,aes(pies=BRCA_Subtype_PAM50,donuts=sample_type), title="Subtipos tumorales", ratioByGroup=T, showPieName=FALSE, r0=0, labelpositionThreshold = 0.5, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 5, donutLabelSize = 5)
 dev.off()
 bitmap <- pdf_render_page("df_plot1.pdf", page = 1, dpi = 300)
 png::writePNG(bitmap, "df_plot1.png")
