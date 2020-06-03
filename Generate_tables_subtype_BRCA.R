@@ -14,7 +14,7 @@ remove(Patient_samples)
 
 # Cuentas 
 
-Count_file <- "head_TCGA_BRCA_tpm.tsv"
+Count_file <- "TCGA_BRCA_tpm.tsv"
 Counts <- read.table(Count_file, header=T, sep = "\t")
 Counts[] <- lapply(Counts[], factor) 
 
