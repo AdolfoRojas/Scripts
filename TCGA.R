@@ -7,6 +7,7 @@ setwd("../Tesis")
 #-----------------------------------------------------------------------------------------------------------------------------------------#
 
 file <- "TCGA_ID_MAP_BRCA.csv"
+file.exists("TCGA_ID_MAP_BRCA.csv")
 Original_file<- read.table(file, header=T, sep = ",")
 Original_file$patient <- as.factor(substr(Original_file$AliquotBarcode, start = 1 , stop = 12 ))
 length(unique(Original_file$patient))
