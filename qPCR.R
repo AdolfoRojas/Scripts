@@ -20,4 +20,3 @@ result <- ddCtExpression(CtData, calibrationSample=name.reference.sample, housek
 CtErr(result)
 br <- errBarchart(result)
 print(br)
-?errBarchart()

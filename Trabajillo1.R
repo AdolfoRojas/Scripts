@@ -54,5 +54,3 @@ for (Row in 1:length(merged$ID)) {
 }
 
 ya_reali <- read.delim("GSE119257_M0_vs_M1_Gene_ID.tsv", sep = "\t", header = T)
-#print
-

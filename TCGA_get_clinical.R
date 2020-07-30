@@ -1,23 +1,23 @@
 library(TCGAbiolinks)
-#setwd("../Tesis")
+setwd("../Tesis")
 #-----------------------------------------------------------------------------------------------------------------------------------------#
 Cancer <- "COAD"            ##Enter Cancer study abbreviation
 
-if (file.exists(paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = ""))==F){
+if (file.exists(paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = "")) == F){
   ID_file <- read.table("TCGA_ID_MAP.csv", header=T, sep = ",") #archivo con las muestras en el server
-  Cancer_IDs_file <-ID_file[ which(ID_file$Disease==Cancer),]# extrae las muestras asociadas al cancer deseado
+  Cancer_IDs_file <- ID_file[which(ID_file$Disease == Cancer), ]# extrae las muestras asociadas al cancer deseado
   write.table(Cancer_IDs_file, sep = ",", file = paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = ""), row.names = F, quote = F, col.names = T)
   remove(ID_file)
   remove(Cancer_IDs_file)
 }
 
-Original_file<- read.table(paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = ""), header=T, sep = ",")
-Original_file$patient <- as.factor(substr(Original_file$AliquotBarcode, start = 1 , stop = 12 )) # recorta el barcode de la muestra para obtener la etiqueta del paciente
+Original_file <- read.table(paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = ""), header=T, sep = ",")
+Original_file$patient <- as.factor(substr(Original_file$AliquotBarcode, start = 1 , stop = 12)) # recorta el barcode de la muestra para obtener la etiqueta del paciente
 length(unique(Original_file$patient))
-Original_file$TSS <- as.factor(substr(Original_file$AliquotBarcode, start = 6 , stop = 7 )) # extrae los datos finales del barcode asociado al TSS
+Original_file$TSS <- as.factor(substr(Original_file$AliquotBarcode, start = 6 , stop = 7)) # extrae los datos finales del barcode asociado al TSS
 
-if (file.exists(paste("TCGA-",  Cancer, "_clinical.csv", sep = ""))==F){ 
-  GDCquery_clinic(paste("TCGA-", Cancer, sep = ""), type = "clinical", save.csv = T) # Descarga las caracteristicas clinicas de las muestras 
+if (file.exists(paste("TCGA-",  Cancer, "_clinical.csv", sep = "")) == F){
+  GDCquery_clinic(paste("TCGA-", Cancer, sep = ""), type = "clinical", save.csv = T) # Descarga las caracteristicas clinicas de las muestras
 }
 
 Clinical_data <- read.table(paste("TCGA-",  Cancer, "_clinical.csv", sep = ""), header=T, sep = ",")
@@ -49,11 +49,11 @@ Reduced_Tissue_Source_Site <- Tissue_Source_Site[c(1, 2)]
 
 
 # Cruzar tablas
-Original_file <- as.data.frame(merge(Original_file, Reduced_Tissue_Source_Site, by = "TSS")) 
+Original_file <- as.data.frame(merge(Original_file, Reduced_Tissue_Source_Site, by = "TSS"))
 length(unique(Original_file$patient)) # Agrego esto para revisar si hay perdidas de muestras y pacientes al cruzar
 Original_file <- as.data.frame(merge(Original_file, sample_Type, by = "AliquotBarcode"))
 length(unique(Original_file$patient))
-Original_file <- as.data.frame(merge(Original_file, Reduced_Clinical_data, by = "patient")) 
+Original_file <- as.data.frame(merge(Original_file, Reduced_Clinical_data, by = "patient"))
 length(unique(Original_file$patient))
 Reduced_Original_file <- Original_file[c(1,2,4,7:12)]
 Reduced_Original_file$CGHubAnalysisID <- paste(Reduced_Original_file$sample_type, Reduced_Original_file$CGHubAnalysisID, sep = "_")
@@ -63,13 +63,13 @@ Reduced_Original_file$CGHubAnalysisID <- paste(Reduced_Original_file$sample_type
 Subtype <- TCGAquery_subtype(tumor = Cancer) #
 Reduced_Subtype <- Subtype[c(1,9,12)] #cambiar por columnas de interes
 
-length(unique(Reduced_Subtype$patient)) 
+length(unique(Reduced_Subtype$patient))
 length(unique(Original_file$patient))
 
 df <- as.data.frame(merge(Reduced_Original_file, Reduced_Subtype, by = "patient"))
 df <- df[c(1:3,9,5,6,10,11,4,7,8)]
 length(unique(df$patient))
-#df <- df[ which(df$gender=='female'), ] 
+#df <- df[ which(df$gender=='female'), ]
 #df <- df[ which(df$sample_type !='TM'), ]
 
 

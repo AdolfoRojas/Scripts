@@ -77,7 +77,7 @@ def STRING():
         response = requests.post(request_url, data=params) ## Call STRING
     
         Interactors= list()
-        count3 = 0
+        #count3 = 0
         interaction = list()
         partner_name = "N.A."        
         for line in response.text.strip().split("\n")[1:]:  #[1:] evita que se impriman los encabezados
