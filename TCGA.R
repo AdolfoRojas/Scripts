@@ -198,4 +198,45 @@ bitmap <- pdf_render_page("df_plot4.pdf", page = 1, dpi = 300)
 png::writePNG(bitmap, "df_plot4.png")
 unlink("df_plot4.pdf")
 unlink("df_plot4")
-plot(iris)
+
+#---------------------------------------------------------------------------------------------------------------------------#
+# Imagenes de subtipo con distribucion segun estadio
+
+library(ggplot2)
+require(moonBook)
+library(pdftools)
+library(ggforce)
+library(grid)
+setwd("../Tesis")
+file2 <- "Samples_Subtype_BCa.tsv"
+
+df_plot1 <- read.table(file2, header=T, sep = "\t")
+df_plot1 <- df_plot1[ which(df_plot1$BRCA_Subtype_PAM50!='Normal'), ] # 1192 M, 1042 P
+write.table(df_plot1, sep = "\t",
+            file = "df_plotx", 
+            row.names = F, quote = F, col.names = T)
+df_plot1 <- read.table("df_plotx", header=T, sep = "\t")
+
+df_plot1$BRCA_Subtype_PAM50 <- as.factor(df_plot1$BRCA_Subtype_PAM50)
+levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "LumA"] <- "Luminal A"
+levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "LumB"] <- "Luminal B"
+levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "Her2"] <- "HER2"
+length(unique(df_plot1$patient))
+
+for (subtype in levels(df_plot1$BRCA_Subtype_PAM50)){
+        df_plotx <-df_plot1[df_plot1$BRCA_Subtype_PAM50 == subtype,]
+        write.table(df_plotx, sep = "\t", file = "df_plotx", row.names = F, quote = F, col.names = T)
+        df_plotx <- read.table("df_plotx", header=T, sep = "\t")
+        pdf("df_plotx.pdf", height = 8.5, width = 8.5)
+        PieDonut(df_plotx,aes(pies=BRCA_Subtype_PAM50,donuts=pathologic_stage),mainCol="#7CAE00", title=subtype, ratioByGroup=T, showPieName=FALSE, r0=0,r1=0.3,r2=0.6, labelpositionThreshold = 0.05, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 7, donutLabelSize = 5)
+        #PieDonut(df_plotx,aes(pies=BRCA_Subtype_PAM50, donuts=sample_Type), title=subtype, ratioByGroup=T, showPieName=FALSE, r0=0, labelpositionThreshold = 0.5, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 5, donutLabelSize = 5)
+        dev.off()
+        bitmap <- pdf_render_page("df_plotx.pdf", page = 1, dpi = 300)
+        png::writePNG(bitmap, paste(subtype, "_df_plotx.png",sep = ""))
+        unlink("df_plotx.pdf")
+        unlink("df_plotx")
+        remove(df_plotx)}
+
+
+# Colores designados en imagen Subtipos tumorales para cada subtipo      "#F8766D" "#7CAE00" "#00BFC4" "#C77CFF"  # Basal- Her2 - LumA - LumB
+

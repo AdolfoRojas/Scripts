@@ -1,7 +1,7 @@
 library(TCGAbiolinks)
 setwd("../Tesis")
 #-----------------------------------------------------------------------------------------------------------------------------------------#
-Cancer <- "COAD"            ##Enter Cancer study abbreviation
+Cancer <- "BRCA"            ##Enter Cancer study abbreviation
 
 if (file.exists(paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = "")) == F){
   ID_file <- read.table("TCGA_ID_MAP.csv", header=T, sep = ",") #archivo con las muestras en el server
@@ -21,7 +21,7 @@ if (file.exists(paste("TCGA-",  Cancer, "_clinical.csv", sep = "")) == F){
 }
 
 Clinical_data <- read.table(paste("TCGA-",  Cancer, "_clinical.csv", sep = ""), header=T, sep = ",")
-Reduced_Clinical_data <- Clinical_data[c("submitter_id", "primary_diagnosis", "ethnicity", "race", "gender")] # Caracteristicas Clinicaas de Interes
+Reduced_Clinical_data <- Clinical_data[c("submitter_id", "primary_diagnosis", "ethnicity", "race", "gender","age_at_diagnosis")] # Caracteristicas Clinicaas de Interes
 length(unique(Reduced_Clinical_data$patient))
 
 
@@ -53,9 +53,9 @@ Original_file <- as.data.frame(merge(Original_file, Reduced_Tissue_Source_Site, 
 length(unique(Original_file$patient)) # Agrego esto para revisar si hay perdidas de muestras y pacientes al cruzar
 Original_file <- as.data.frame(merge(Original_file, sample_Type, by = "AliquotBarcode"))
 length(unique(Original_file$patient))
-Original_file <- as.data.frame(merge(Original_file, Reduced_Clinical_data, by = "patient"))
+Original_file <- as.data.frame(merge(Original_file, Reduced_Clinical_data, by.x = "patient", by.y = "submitter_id"))
 length(unique(Original_file$patient))
-Reduced_Original_file <- Original_file[c(1,2,4,7:12)]
+Reduced_Original_file <- Original_file[c(1,2,4,7:13)]
 Reduced_Original_file$CGHubAnalysisID <- paste(Reduced_Original_file$sample_type, Reduced_Original_file$CGHubAnalysisID, sep = "_")
 
 # Subtipo tumoral, entrega datos del tumor y algunos marcadores moleculares
@@ -67,11 +67,11 @@ length(unique(Reduced_Subtype$patient))
 length(unique(Original_file$patient))
 
 df <- as.data.frame(merge(Reduced_Original_file, Reduced_Subtype, by = "patient"))
-df <- df[c(1:3,9,5,6,10,11,4,7,8)]
+df <- df[c(1:3,9,5,6,10,11,12,4,7,8)]
 length(unique(df$patient))
-#df <- df[ which(df$gender=='female'), ]
-#df <- df[ which(df$sample_type !='TM'), ]
-
+df <- df[ which(df$gender=='female'), ]
+df <- df[ which(df$sample_type !='TM'), ]
+length(unique(df$patient))
 
 write.table(df, sep = "\t", file = paste("Samples_Subtype_",  Cancer, ".tsv", sep = ""), row.names = F, quote = F, col.names = T)
 remove(df)
