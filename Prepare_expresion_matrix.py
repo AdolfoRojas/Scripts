@@ -2,8 +2,8 @@
 import pandas as pd
 def Replace_lncRNA_to_matrix_ID():
     print("Iniciando Carga")        
-    raw_matrix = pd.read_csv("Tesis/IDs_matrix.txt", sep="|",header=None)
-    ref_lncRNAs = pd.read_csv("Tesis/Human_lncRNAs.bed12", sep="\t",header=None)
+    raw_matrix = pd.read_csv("IDs_matrix.txt", sep="|",header=None)  # Requerido
+    ref_lncRNAs = pd.read_csv("Human_lncRNAs.bed12", sep="\t",header=None) # Requerido
     ref_lncRNAs[3] = ref_lncRNAs[3].str.split(".", n=1, expand = True)[0]
     raw_matrix[0] = raw_matrix[0].str.split(".", n=1, expand = True)[0]
     print("Iniciando Reemplazo")
@@ -23,24 +23,23 @@ def Replace_lncRNA_to_matrix_ID():
     raw_matrix = raw_matrix.rename(columns= {0:"Transcripts"})
     Summary_replaced = Replaced_types["Type_replaced"].value_counts()
     print(Summary_replaced)
-    Replaced_types.to_csv("Tesis/lncRNAs_reemplazados_changed_types.txt", sep="\t",header=True, index=False)
-    raw_matrix.to_csv("Tesis/lncRNAs_reemplazados.txt", sep="|",header=True, index=False)
-#Replace_lncRNA_to_matrix_ID()
+    Replaced_types.to_csv("lncRNAs_reemplazados_changed_types.txt", sep="\t",header=True, index=False)
+    raw_matrix.to_csv("lncRNAs_reemplazados.txt", sep="|",header=True, index=False)
+Replace_lncRNA_to_matrix_ID()
 
 def Join_Matrix_ID_to_matrix_and_sum():
     print("Iniciando")
-    data = pd.read_csv("Tesis/head_TCGA_BRCA_tpm.tsv", sep="\t",header=0).drop(columns=["Unnamed: 0"])
+    data = pd.read_csv("TCGA_BRCA_tpm.tsv", sep="\t",header=0).drop(columns=["Unnamed: 0"]) # Requerido
     print("Archivo de datos cargado")
     data = data + 0.0001
-    #ids = pd.read_csv("Tesis/lncRNAs_reemplazados.txt", sep="\t",header=0)
-    ids = pd.read_csv("Tesis/lncRNAs_reemplazados.txt", sep="\t",header=0).drop(range(9,199169), axis=0).rename(columns={"Transcripts|1|2|3|4|5|6|7|8":"Transcripts"})
+    ids = pd.read_csv("lncRNAs_reemplazados.txt", sep="\t",header=0).rename(columns={"Transcripts|1|2|3|4|5|6|7|8":"Transcripts"})    
     ids = ids.join(data)
-    ids.to_csv("Tesis/TCGA-BRCA_tpm_+0.0001.txt", sep="\t",header=True, index=False)
-#Join_Matrix_ID_to_matrix_and_sum()
+    ids.to_csv("TCGA-BRCA_tpm_+0.0001.txt", sep="\t",header=True, index=False)
+Join_Matrix_ID_to_matrix_and_sum()
 
 def Generate_tables_subtype_BRCA():
-    Count_file = pd.read_csv("Tesis/TCGA-BRCA_tpm_+0.0001.txt", sep="\t",header=0)
-    Subtypes_file = pd.read_csv("Tesis/Samples_Subtype_BRCA.tsv", sep="\t",header=0)
+    Count_file = pd.read_csv("TCGA-BRCA_tpm_+0.0001.txt", sep="\t",header=0)
+    Subtypes_file = pd.read_csv("Samples_Subtype_BRCA.tsv", sep="\t",header=0) # Requerido
     for subtype in Subtypes_file["BRCA_Subtype_PAM50"].unique():         
         SubType_df = Subtypes_file[Subtypes_file["BRCA_Subtype_PAM50"] == subtype]
         SubType_cols = ["Transcripts"]
@@ -48,7 +47,11 @@ def Generate_tables_subtype_BRCA():
             Count_file = Count_file.rename(columns={Count_file.columns[Count_file.columns.str.contains(Sample[4:11], case=True, regex=True)][0]:Sample})
             SubType_cols.append(Sample)
         SubType_counts = Count_file[SubType_cols]
-        SubType_counts.to_csv("Tesis/" + subtype + "_counts.tab", sep="\t",header=True, index=False)
+        SubType_counts.to_csv(subtype + "_tpm_+0.0001_counts.tab", sep="\t",header=True, index=False)
         print(subtype)
-        print(SubType_counts)
+        SubType_df = SubType_df[["patient","age_at_diagnosis","pathologic_stage","BRCA_Subtype_PAM50","race"]]
+        SubType_df["age_at_diagnosis"] = SubType_df["age_at_diagnosis"]/365.25
+        SubType_df = SubType_df.drop_duplicates()
+        print("Individuals: "+ str(len(SubType_df["patient"])) +"\nAverage Age at diagnosis, years(std): " + str(round(SubType_df["age_at_diagnosis"].mean(), 1)) + "("+ str(round(SubType_df["age_at_diagnosis"].std(), 1)) + ")")
+        print(pd.DataFrame({"race":SubType_df["race"].value_counts().keys().tolist(), "# Individuals":SubType_df["race"].value_counts().tolist(), "%":(round(SubType_df["race"].value_counts()/SubType_df["race"].value_counts().sum()*100, 2)).tolist()}))
 Generate_tables_subtype_BRCA()

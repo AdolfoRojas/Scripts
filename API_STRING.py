@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 ##################################################################
-import sys
-sys.path.append("/usr/local/lib/python2.7/dist-packages")
 from Bio import Entrez
 import re 
 import requests ## python -m pip install requests
@@ -99,4 +97,4 @@ def STRING():
         interaction = str(interaction)
         interaction = interaction.replace("\n", ";") 
         file4.write(Rs + "\t" + str(len(Interactors)) + "\t" + interaction + "\n")
-STRING()    
+STRING()
