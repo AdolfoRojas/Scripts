@@ -208,10 +208,11 @@ library(pdftools)
 library(ggforce)
 library(grid)
 setwd("../Tesis")
-file2 <- "Samples_Subtype_BCa.tsv"
+file2 <- "2_sample_annot.tab"
 
 df_plot1 <- read.table(file2, header=T, sep = "\t")
 df_plot1 <- df_plot1[ which(df_plot1$BRCA_Subtype_PAM50!='Normal'), ] # 1192 M, 1042 P
+df_plot1 <- df_plot1[ which(df_plot1$sample_type!='NT'), ]
 write.table(df_plot1, sep = "\t",
             file = "df_plotx", 
             row.names = F, quote = F, col.names = T)
@@ -222,13 +223,15 @@ levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "LumA
 levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "LumB"] <- "Luminal B"
 levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "Her2"] <- "HER2"
 length(unique(df_plot1$patient))
-
+count <- 0
+color <- c("#F8766D", "#7CAE00", "#00BFC4", "#C77CFF")
 for (subtype in levels(df_plot1$BRCA_Subtype_PAM50)){
+        count <- count + 1 
         df_plotx <-df_plot1[df_plot1$BRCA_Subtype_PAM50 == subtype,]
         write.table(df_plotx, sep = "\t", file = "df_plotx", row.names = F, quote = F, col.names = T)
         df_plotx <- read.table("df_plotx", header=T, sep = "\t")
         pdf("df_plotx.pdf", height = 8.5, width = 8.5)
-        PieDonut(df_plotx,aes(pies=BRCA_Subtype_PAM50,donuts=pathologic_stage),mainCol="#7CAE00", title=subtype, ratioByGroup=T, showPieName=FALSE, r0=0,r1=0.3,r2=0.6, labelpositionThreshold = 0.05, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 7, donutLabelSize = 5)
+        PieDonut(df_plotx,aes(pies=BRCA_Subtype_PAM50,donuts=pathologic_stage),mainCol=color[count], title=subtype, ratioByGroup=T, showPieName=FALSE, r0=0,r1=0.3,r2=0.6, labelpositionThreshold = 0.05, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 7, donutLabelSize = 5)
         #PieDonut(df_plotx,aes(pies=BRCA_Subtype_PAM50, donuts=sample_Type), title=subtype, ratioByGroup=T, showPieName=FALSE, r0=0, labelpositionThreshold = 0.5, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 5, donutLabelSize = 5)
         dev.off()
         bitmap <- pdf_render_page("df_plotx.pdf", page = 1, dpi = 300)

@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 #############################################################################################################################################
 #                   miRNAs
 #############################################################################################################################################
@@ -13,19 +14,19 @@ for (subtype in subtipos){
   de$diffexpressed <- "NO"
   de$important <- "NO"
   # if log2Foldchange > 0.6 and pvalue < 0.05, set as "UP" 
-  de$diffexpressed[de$log2FoldChange > 1 & de$pvalue < 0.05] <- "UP"
+  de$diffexpressed[de$log2FoldChange > 1 & de$padj < 0.05] <- "UP"
   # if log2Foldchange < -0.6 and pvalue < 0.05, set as "DOWN"
-  de$diffexpressed[de$log2FoldChange < -1 & de$pvalue < 0.05] <- "DOWN"
+  de$diffexpressed[de$log2FoldChange < -1 & de$padj < 0.05] <- "DOWN"
   
-  de$important[de$log2FoldChange > 2.5 & de$pvalue < 0.05] <- "UP"
+  de$important[de$log2FoldChange > 2.5 & de$padj < 0.05] <- "UP"
   # if log2Foldchange < -0.6 and pvalue < 0.05, set as "DOWN"
-  de$important[de$log2FoldChange < -2.5 & de$pvalue < 0.05] <- "DOWN"
+  de$important[de$log2FoldChange < -2.5 & de$padj < 0.05] <- "DOWN"
   de$delabel <- NA
   de$delabel[de$important != "NO"] <- de$Transcrito[de$important != "NO"]
   de$delabel <- gsub("hsa-", "", de$delabel)
   # plot adding up all layers we have seen so far
-  ggplot(data=de, aes(x=log2FoldChange, y=-log10(pvalue), col=diffexpressed, label=delabel)) +
-    ggtitle(paste("Breast cancer diferential expression analysis\nmiRNAs - Gene level\n", subtype, " samples", sep = ""))+
+  ggplot(data=de, aes(x=log2FoldChange, y=-log10(padj), col=diffexpressed, label=delabel)) +
+    ggtitle(paste("Breast cancer diferential expression analysis\nmiRNAs\n", subtype, " samples", sep = ""))+
     geom_point(size = 0.4) + 
     theme_minimal() +
     geom_text_repel(
