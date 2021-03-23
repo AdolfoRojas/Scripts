@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-setwd(../Tesis/Expresion Diferencial)
+setwd("../Tesis/Expresion Diferencial")
 subtipos <- c("Her2", "LumB", "LumA", "Basal")
 
 df <- data.frame()
@@ -42,20 +42,119 @@ df1 <- df[df$biotype == "protein_coding",]
 df3 <- df[df$biotype == "lncRNA",]
 df4 <- df[df$biotype != "protein_coding" & df$biotype != "lncRNA",]
 
+library(VennDiagram)
+library(RColorBrewer)
+myCol <- brewer.pal(4, "Pastel2")
 
-counts <- ddply(df1, .(df1$subtype, df1$regulation), nrow)
+venn.diagram(
+  x = list(df1[df1$subtype == "Basal" & df1$log2FoldChange > 0,]$Transcrito,
+  df1[df1$subtype == "Her2" & df1$log2FoldChange > 0,]$Transcrito,
+  df1[df1$subtype == "Luminal A" & df1$log2FoldChange > 0,]$Transcrito, 
+  df1[df1$subtype == "Luminal B" & df1$log2FoldChange > 0,]$Transcrito),
+  category.names = c("Basal","Her2", "Luminal A" , "Luminal B"),
+  filename = 'Venn_DE_Protein_coding_up.png',
+  output=TRUE,
+  # Output features
+  imagetype="png" ,
+  height = 1080 , 
+  width = 1920 , 
+  resolution = 600,
+  compression = "lzw",
+  # Circles
+  lwd = 2,
+  lty = 'blank',
+  fill = myCol,
+  # Numbers
+  cex = .6,
+  fontface = "bold",
+  fontfamily = "sans")
+
+venn.diagram(
+  x = list(df1[df1$subtype == "Basal" & df1$log2FoldChange < 0,]$Transcrito,
+  df1[df1$subtype == "Her2" & df1$log2FoldChange < 0,]$Transcrito,
+  df1[df1$subtype == "Luminal A" & df1$log2FoldChange < 0,]$Transcrito, 
+  df1[df1$subtype == "Luminal B" & df1$log2FoldChange < 0,]$Transcrito),
+  category.names = c("Basal","Her2", "Luminal A" , "Luminal B"),
+  filename = 'Venn_DE_Protein_coding_down.png',
+  output=TRUE,
+  # Output features
+  imagetype="png" ,
+  height = 1080 , 
+  width = 1920 , 
+  resolution = 600,
+  compression = "lzw",
+  # Circles
+  lwd = 2,
+  lty = 'blank',
+  fill = myCol,
+  # Numbers
+  cex = .6,
+  fontface = "bold",
+  fontfamily = "sans")
+
+venn.diagram(
+  x = list(df3[df3$subtype == "Basal" & df3$log2FoldChange < 0,]$Transcrito,
+  df3[df3$subtype == "Her2" & df3$log2FoldChange < 0,]$Transcrito,
+  df3[df3$subtype == "Luminal A" & df3$log2FoldChange < 0,]$Transcrito, 
+  df3[df3$subtype == "Luminal B" & df3$log2FoldChange < 0,]$Transcrito),
+  category.names = c("Basal","Her2", "Luminal A" , "Luminal B"),
+  filename = 'Venn_DE_lncRNA_down.png',
+  output=TRUE,
+  # Output features
+  imagetype="png" ,
+  height = 1080 , 
+  width = 1920 , 
+  resolution = 600,
+  compression = "lzw",
+  # Circles
+  lwd = 2,
+  lty = 'blank',
+  fill = myCol,
+  # Numbers
+  cex = .6,
+  fontface = "bold",
+  fontfamily = "sans")
+
+venn.diagram(
+  x = list(df3[df3$subtype == "Basal" & df3$log2FoldChange > 0,]$Transcrito,
+  df3[df3$subtype == "Her2" & df3$log2FoldChange > 0,]$Transcrito,
+  df3[df3$subtype == "Luminal A" & df3$log2FoldChange > 0,]$Transcrito, 
+  df3[df3$subtype == "Luminal B" & df3$log2FoldChange > 0,]$Transcrito),
+  category.names = c("Basal","Her2", "Luminal A" , "Luminal B"),
+  filename = 'Venn_DE_lncRNA_up.png',
+  output=TRUE,
+  # Output features
+  imagetype="png" ,
+  height = 1080 , 
+  width = 1920 , 
+  resolution = 600,
+  compression = "lzw",
+  # Circles
+  lwd = 2,
+  lty = 'blank',
+  fill = myCol,
+  # Numbers
+  cex = .6,
+  fontface = "bold",
+  fontfamily = "sans")
+
+
+
+
+############################################################################################
+counts <- ddply(df1, .(df1$subtype, df1$regulation), nrow) # protein_coding
 names(counts) <- c("Subtype", "Regulation", "Freq")
 
-counts2 <- ddply(df3, .(df3$subtype, df3$regulation), nrow)
+counts2 <- ddply(df3, .(df3$subtype, df3$regulation), nrow) # lncRNA
 names(counts2) <- c("Subtype", "Regulation", "Freq")
 
-counts4 <- ddply(df4, .(df4$subtype, df4$regulation), nrow)
+counts4 <- ddply(df4, .(df4$subtype, df4$regulation), nrow) # Others
 names(counts4) <- c("Subtype", "Regulation", "Freq")
 
 
 df2$regulation <- "Up"
 df2[df2$log2FoldChange < 0,]$regulation <- "Down"
-counts3 <- ddply(df2, .(df2$subtype, df2$regulation), nrow)
+counts3 <- ddply(df2, .(df2$subtype, df2$regulation), nrow) # miRNA
 names(counts3) <- c("Subtype", "Regulation", "Freq")
 
 protein_coding <- ggplot(counts, aes(x = Subtype, y = Regulation)) + 

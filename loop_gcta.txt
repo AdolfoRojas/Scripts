@@ -1,4 +1,0 @@
-for i in {1..23} 
-do    
-	./gcta_1.93.2beta/gcta64  --thread-num 3 --dosage-mach-gz imputed_chr$i.dose.gz imputed_chr$i.info.gz --maf 0.01 --imput-rsq 0.3 --make-bed --out imputed_chr$i
-done

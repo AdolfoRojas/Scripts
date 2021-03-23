@@ -1,6 +1,6 @@
 library(VennDiagram)
 
-file <- "Resume_PEV_5cN8XnXzquyzuf4B.txt.tsv"
+file <- "../VEP_p-Value_threshold_1_hapmap3_all_variant_effect_non_zero"
 #rs_inicial <- read.table(file, header=F, sep = "\t", col.names = c("Uploaded_variation", "Location", "Allele", "Consequence", "IMPACT", "SYMBOL", "Feature_type", "Features(transcripts)", "Feature", "BIOTYPE", "Existing_variation"), skip = 1)
 
 
@@ -27,7 +27,7 @@ draw.quad.venn(area1 = nrow(subset(rs_inicial, grepl("lncRNA",rs_inicial$BIOTYPE
                n134  = nrow(subset(rs_inicial, grepl("lncRNA",rs_inicial$BIOTYPE) & grepl("RegulatoryFeature",rs_inicial$Feature_type) & grepl("intergenic_variant",rs_inicial$Consequence))),
                n234 = nrow(subset(rs_inicial, grepl("protein_coding",rs_inicial$BIOTYPE) & grepl("RegulatoryFeature",rs_inicial$Feature_type) & grepl("intergenic_variant",rs_inicial$Consequence))),
                n1234 = nrow(subset(rs_inicial, grepl("lncRNA",rs_inicial$BIOTYPE) & grepl("protein_coding",rs_inicial$BIOTYPE) & grepl("RegulatoryFeature",rs_inicial$Feature_type) & grepl("intergenic_variant",rs_inicial$Consequence))),
-               category = c("lncRNAs", "Genes codificantes", "Características regulatorias", "Intergénicas"), lty = "blank", 
+               category = c("lncRNAs", "Genes codificantes", "Caracterï¿½sticas regulatorias", "Intergï¿½nicas"), lty = "blank", 
                fill = c("skyblue", "pink1", "mediumorchid", "red"))
 
 
