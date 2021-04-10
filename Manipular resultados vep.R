@@ -1,17 +1,39 @@
+#library(VennDiagram)
+
+file <- "VEP_p-Value_threshold_0.01_hapmap3_all_variant_effect"
+
+rs_inicial <- read.table(file, header=F, sep = "\t")
+names(rs_inicial) <- c("rsid", "Location", "Allele_alt", "Affected_gene", "Feature", "Feature_type", "Variant_type","cDNA_position", "CDS_position", "Protein_position", "Amino_acids", "Codons", "Existing_variation", "Other_characteristics")
+
 library(VennDiagram)
+library(RColorBrewer)
+myCol <- brewer.pal(4, "Pastel2")
 
-file <- "../VEP_p-Value_threshold_1_hapmap3_all_variant_effect_non_zero"
-#rs_inicial <- read.table(file, header=F, sep = "\t", col.names = c("Uploaded_variation", "Location", "Allele", "Consequence", "IMPACT", "SYMBOL", "Feature_type", "Features(transcripts)", "Feature", "BIOTYPE", "Existing_variation"), skip = 1)
+venn.diagram(
+  x = list(rs_inicial[rs_inicial$Variant_type == "intergenic_variant",]$rsid,
+  rs_inicial[rs_inicial$subtype == "Her2" & rs_inicial$log2FoldChange > 0,]$rsid,
+  rs_inicial[rs_inicial$subtype == "Luminal A" & rs_inicial$log2FoldChange > 0,]$rsid, 
+  rs_inicial[rs_inicial$subtype == "Luminal B" & rs_inicial$log2FoldChange > 0,]$rsid),
+  category.names = c("Intergenic variants","Her2", "Luminal A" , "Luminal B"),
+  filename = 'Venn_DE_Protein_coding_up.png',
+  output=TRUE,
+  # Output features
+  imagetype="png" ,
+  height = 1080 , 
+  width = 1920 , 
+  resolution = 600,
+  compression = "lzw",
+  # Circles
+  lwd = 2,
+  lty = 'blank',
+  fill = myCol,
+  # Numbers
+  cex = .6,
+  fontface = "bold",
+  fontfamily = "sans")
 
 
-rs_inicial <- read.table(file, header=T, sep = "\t")
 
-
-nrow(subset(rs_inicial, grepl("lncRNA",rs_inicial$BIOTYPE)))
-
-
-
-rs <-rs_inicial[c(1,2,4,5,6,8,10,13)] 
 
 
 grid.newpage()
