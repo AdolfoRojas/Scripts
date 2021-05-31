@@ -8,7 +8,7 @@ for (subtype in subtipos){
   colnames(de_inicial)[1] <- "Transcrito"
   de_inicial$subtype <- subtype
   de_inicial <- de_inicial[de_inicial$padj < 0.05,]
-  de_inicial <- de_inicial[de_inicial$log2FoldChange < -2 | de_inicial$log2FoldChange > 2,]
+  de_inicial <- de_inicial[de_inicial$log2FoldChange < -1 | de_inicial$log2FoldChange > 1,]
   df <- rbind(df,de_inicial)
   df <- na.omit(df)
 }
@@ -39,6 +39,7 @@ df$regulation <- "Up"
 df[df$log2FoldChange < 0,]$regulation <- "Down"
 
 df1 <- df[df$biotype == "protein_coding",]
+df1 <- df1[df1$log2FoldChange < -2 | df1$log2FoldChange > 2,]
 df3 <- df[df$biotype == "lncRNA",]
 df4 <- df[df$biotype != "protein_coding" & df$biotype != "lncRNA",]
 
@@ -142,6 +143,8 @@ venn.diagram(
 
 
 ############################################################################################
+library(plyr)
+library(ggplot2)
 counts <- ddply(df1, .(df1$subtype, df1$regulation), nrow) # protein_coding
 names(counts) <- c("Subtype", "Regulation", "Freq")
 
