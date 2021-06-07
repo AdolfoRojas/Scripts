@@ -99,10 +99,26 @@ $ java -jar /media/storage2/software/gatk-4.1.8.1/gatk-package-4.1.8.1-local.jar
 
 $ java -jar /media/storage2/software/snpEff/snpEff.jar download -v hg38 
 
-# Anotación de variantes SNPs
+# Anotación de variantes SNPs (archivo .vcf y .bed con notación de chr)
 
-java -jar /media/storage2/software/snpEff/snpEff.jar -q -noLog -nodownload -interval coding_lncRNA.bed hg38 muestra_filtered_snps.vcf | vcf-sort > muestra_annotated_snpEff_filtered_snps.vcf
+java -jar /media/storage2/software/snpEff/snpEff.jar hg38 -interval coding_and_lncRNA_original.bed muestra_filtered_snp.vcf | vcf-sort > muestra_annotated_snpEff_filtered_snps.vcf
 
-# Anotación de variantes InDels
+# Anotación de variantes InDels (archivo .vcf y .bed con notación de chr)
 
-java -jar /media/storage2/software/snpEff/snpEff.jar -q -noLog -nodownload -interval coding_lncRNA_chr.bed hg38 muestra_filtered_indels.vcf | vcf-sort > muestra_annotated_snpEff_filtered_indels.vcf
+java -jar /media/storage2/software/snpEff/snpEff.jar hg38 -interval coding_lncRNA_original.bed hg38 muestra_filtered_indels.vcf | vcf-sort > muestra_annotated_snpEff_filtered_indels.vcf
+
+# Anotación de variantes por Clinvar
+
+# Descargar base de datos clinvar para GRCh38
+
+$ wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
+$ wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz.tbi
+$ wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz.md5
+
+# Anotación de variantes SNPs por clinvar
+
+$ java -jar /media/storage2/software/snpEff/SnpSift.jar annotate clinvar.vcf.gz muestra_annotated_snpEff_filtered_snps.vcf > muestra_annotated_clinvar_filtered_snps.vcf
+
+# Anotación de variantes InDels por clinvar
+
+$ java -jar /media/storage2/software/snpEff/SnpSift.jar annotate clinvar.vcf.gz muestra_annotated_snpEff_filtered_indels.vcf > muestra_annotated_clinvar_filtered_indels.vcf
