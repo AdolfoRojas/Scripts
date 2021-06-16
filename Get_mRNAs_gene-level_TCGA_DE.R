@@ -4,13 +4,17 @@ library(DESeq2)
 library(ggplot2)
 library(mdp)
 library(BiocParallel)
-register(MulticoreParam(60))
+library(telegram.bot)
+bot = Bot(token = bot_token("AARH_95_bot"))
+chat_id <- bot_token("chat_id")
+register(MulticoreParam(40))
 Taruca_adolfo_tesis <- "adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/Resultados_Tesis/"
 system("mkdir -p Resultados_expresion_diferencial_mRNAs-gene_level")
 system("mkdir -p Resultados_expresion_diferencial_miRNAs-gene_level")
 system("mkdir -p Corregido_resultados_expresion_diferencial_miRNAs-gene_level")
 system("mkdir -p Corregido_resultados_expresion_diferencial_mRNAs-gene_level")
-my.mode <- 2
+#my.mode <- 2
+for (my.mode in 1:2) {
 #while (my.mode!=1 | my.mode != 2){
 #my.mode <- readline(prompt="Enter mode: \n(1 = Descargar y analizar)\n(2 = Ajustar y re-analizar)")
 print(my.mode)
@@ -20,6 +24,7 @@ print(my.mode)
 if (my.mode == 1) {
         require(TCGAbiolinks)
         library(SummarizedExperiment)
+        library(dplyr)
         CancerProject <- "TCGA-BRCA"
         DataDirectory <- paste0("GDC/",gsub("-","_",CancerProject))
         FileNameData <- paste0(DataDirectory, "_","mRNA_gene_quantification",".rda")
@@ -31,6 +36,14 @@ if (my.mode == 1) {
         GDCdownload(query = queryDown.miR, directory = DataDirectory)
         dataAssy.miR <- GDCprepare(query = queryDown.miR, save = TRUE, save.filename = FileNameData, summarizedExperiment = TRUE, directory =DataDirectory)
         matrix <- assay(dataAssy.miR,"HTSeq - Counts")
+        #matrix2 <- t(matrix)
+        #matrix3 <- as.data.frame(matrix2)
+        #matrix3$patient_sample <- substring(rownames(matrix3), 1, 15)
+        #matrix3[,-which(names(matrix3)=="patient_sample")] <- mutate_all(matrix3[,-which(names(matrix3)=="patient_sample")], function(x) as.numeric(as.character(x)))        
+        #matrix4 <- aggregate(matrix3[,-which(names(matrix3)=="patient_sample")], list(matrix3$patient_sample), mean)
+        #rownames(matrix4) <- matrix4$Group.1
+        #matrix4$Group.1 <- NULL
+        #matrix <- round(as.data.frame(t(matrix4))) 
         write.table(matrix, sep = "\t", file = "1_mRNAs_gene-level_Counts_TCGA_matrix.tab", row.names = T, quote = F, col.names = T)
         #######################################################################################################################################
         #              miRNAs  contiene el script tesis/1_expression_data/TCGA_data/5_Get_miRNAs_count_matrix.R
@@ -49,6 +62,14 @@ if (my.mode == 1) {
         colnames(matrix) <- gsub("read_count_","", colnames(matrix))
         names <- rownames(dataAssy.miR)
         matrix<- cbind(names,matrix)
+        #matrix2 <- t(matrix)
+        #matrix3 <- as.data.frame(matrix2[2:nrow(matrix2),])
+        #matrix3$patient_sample <- substring(rownames(matrix3), 1, 15)
+        #matrix3[,-which(names(matrix3)=="patient_sample")] <- mutate_all(matrix3[,-which(names(matrix3)=="patient_sample")], function(x) as.numeric(as.character(x)))        
+        #matrix4 <- aggregate(matrix3[,-which(names(matrix3)=="patient_sample")], list(matrix3$patient_sample), mean)
+        #rownames(matrix4) <- matrix4$Group.1
+        #matrix4$Group.1 <- NULL
+        #matrix <- round(as.data.frame(t(matrix4)))        
         write.table(matrix, sep = "\t", file = "miRNAs_counts.tab", row.names = F, quote = F, col.names = T)} 
 #######################################################################################################################################
  #              Tratado de muestras  contiene el script tesis/3_co-expresion_analysis/2_prepare_CEMiTool_data.R
@@ -82,8 +103,10 @@ if (my.mode == 2){
         #normal_mdp <- mdp[mdp$allgenes.Class == "Normal",]
         #normal_mdp_disturbed <- tail(normal_mdp[order(normal_mdp$allgenes.Score),]$allgenes.Sample, 10)
         #sample_annot <- sample_annot[!(sample_annot$SampleName %in% normal_mdp_disturbed),]
-        cluster_info <- read.delim("cluster_output.tab", sep = "\t", header=FALSE)
-        sample_annot <- sample_annot[!(sample_annot$SampleName %in% cluster_info$V1),]}
+        cluster_info <- read.delim("cluster_output_miRNAs.tab", sep = "\t", header=FALSE)
+        cluster_info2 <- read.delim("cluster_output_mRNAs.tab", sep = "\t", header=FALSE)
+        sample_annot <- sample_annot[!(sample_annot$SampleName %in% cluster_info$V1),]
+        sample_annot <- sample_annot[!(sample_annot$SampleName %in% cluster_info2$V1),]}
 colnames(expr0) <- gsub("\\.", "-", colnames(expr0))
 colnames(expr0) <- substring(colnames(expr0), 1, 15)
 #######################################################################################################################################
@@ -165,21 +188,28 @@ for (RNAs in c("mRNAs", "miRNAs")) {
         vsd <- varianceStabilizingTransformation(dds, blind=FALSE)
         pcaData <- plotPCA(vsd, intgroup=c("Condition", "Subtype"), returnData=TRUE)
         percentVar <- round(100 * attr(pcaData, "percentVar"))
-        if (my.mode == 1 & RNAs == "mRNAs"){
+        if (my.mode == 1){
                 normal_pca <- pcaData[pcaData$Condition == "Normal",]
+                eps_data <- ""
                 library(dbscan)
+                if (RNAs == "mRNAs"){
+                        eps_data <- 6}
+                if (RNAs == "miRNAs"){
+                        eps_data <- 15}
                 df <- normal_pca[c("PC1","PC2")]
-                pdf("Grafico.pdf", height = 6.5, width = 10)
+                pdf(paste("Grafico_", RNAs, ".pdf", sep = ""), height = 6.5, width = 10)
                 kNNdistplot(df, k = 3  )
+                abline(h = eps_data, lty = 2)
                 dev.off()
-                cl<-dbscan(df,eps=4,MinPts = 3)
+                cl<-dbscan(df,eps= eps_data,MinPts = 3)
                 df2 <- cbind(df,cl$cluster)
                 names(df2)[3] <- "cluster"
                 df2 <- rownames(df2[df2$cluster != 1,])
-                pdf("Grafico2.pdf", height = 6.5, width = 10)
-                hullplot(df,cl$cluster, main = "Convex cluster Hulls, eps= 4")
+                pdf(paste("Grafico2_", RNAs, ".pdf", sep = ""), height = 6.5, width = 10)
+                hullplot(df,cl$cluster, main = paste("Convex cluster Hulls, eps = ", eps_data, sep = ""))
                 dev.off()
-                write.table(df2, file = "cluster_output.tab", row.names = F, quote = F, col.names = F, sep = "\t")}
+                system(paste("scp ", paste("Grafic*_", RNAs, ".pdf", sep = ""), " ",Taruca_adolfo_tesis, sep = ""))
+                write.table(df2, file = paste("cluster_output_", RNAs, ".tab", sep = ""), row.names = F, quote = F, col.names = F, sep = "\t")}
         p <- ggplot(pcaData, aes(PC1, PC2, color=Condition, shape=Subtype)) +
           ggtitle(paste("All samples for ", RNAs, "\n diferential expression analysis-gene level", sep = "")) +
           theme(plot.title = element_text(hjust = 0.5, size=14, face="bold.italic"), axis.title.x =element_text(size=12), axis.title.y = element_text(size=12), legend.title = element_text(face = "bold")) +
@@ -198,47 +228,46 @@ for (RNAs in c("mRNAs", "miRNAs")) {
         png::writePNG(bitmap, paste(Result_directory, "all_samples_", RNAs, "_MA_plot.png", sep = ""))
         unlink(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep = ""))
         write.csv(res, file=paste(Result_directory, "all_samples_", RNAs, "_", levels(dds$Condition)[1], "_vs_", levels(dds$Condition)[2],"_DE.tab", sep= ""))
+        if (my.mode == 2) {          
+                TCGA_files <- c("LumA", "LumB", "Her2", "Basal")
+                for (File in TCGA_files){
+                    coldata <- sample_data[sample_data$Subtype == File | sample_data$Condition == "Normal",]
+                    cts <- matrix[coldata$column] + 1
+                    mdp_samples <- coldata
+                    colnames(mdp_samples) <- c("Sample", "Class", "Subtype")
+                    mdp_samples <- as.data.frame(mdp_samples)
+                    cts2 <- matrix[coldata$column]
+                    colnames(cts2) <- gsub("-","\\.",colnames(cts2))
+                    mdp_samples$Sample <- gsub("-","\\.",mdp_samples$Sample)
 
-        TCGA_files <- c("LumA", "LumB", "Her2", "Basal")
-        for (File in TCGA_files){
-            coldata <- sample_data[sample_data$Subtype == File | sample_data$Condition == "Normal",]
-            cts <- matrix[coldata$column] + 1
-            mdp_samples <- coldata
-            colnames(mdp_samples) <- c("Sample", "Class", "Subtype")
-            mdp_samples <- as.data.frame(mdp_samples)
-            cts2 <- matrix[coldata$column]
-            colnames(cts2) <- gsub("-","\\.",colnames(cts2))
-            mdp_samples$Sample <- gsub("-","\\.",mdp_samples$Sample)
-
-            mdp(cts2, mdp_samples, control_lab = "Normal", file_name = paste(File, "_all_controls_", sep = ""), measure = "mean", directory = Result_directory)
-            dds <- DESeqDataSetFromMatrix(countData = cts, colData = coldata, design = ~ Condition)
-            keep <- rowSums(counts(dds)) > length(cts) ## Pre-Filtering
-            dds <- dds[keep,]
-            dds$Condition <- factor(dds$Condition, levels = c("Normal","Tumoral"))
-            dds$Condition <- droplevels(dds$Condition)
-            dds <- DESeq(dds, fitType="local", parallel = TRUE)
-            vsd <- varianceStabilizingTransformation(dds, blind=FALSE)
-            pcaData <- plotPCA(vsd, intgroup=c("Condition", "Subtype"), returnData=TRUE)
-            percentVar <- round(100 * attr(pcaData, "percentVar"))
-            p <- ggplot(pcaData, aes(PC1, PC2, color=Condition, shape=Subtype)) +
-              ggtitle(paste(File, "samples for", RNAs, "\n diferential expression analysis", sep = " ")) +
-              theme(plot.title = element_text(hjust = 0.5, size=14, face="bold.italic"), axis.title.x =element_text(size=12), axis.title.y = element_text(size=12), legend.title = element_text(face = "bold")) +
-              geom_point(size=1) +
-              xlab(paste0("PC1: ",percentVar[1],"% variance")) +
-              ylab(paste0("PC2: ",percentVar[2],"% variance")) +
-             coord_fixed() +
-             scale_color_manual(values=c("#56B4E9", "red"))
-            ggsave(paste(Result_directory, File, "_samples_all_controls_", RNAs, "_PCA_plot.png", sep = ""), plot = p, width = 8.5, height = 8.5, dpi = 300, units = "in") #####################
-           res <- results(dds, parallel = TRUE)
-            pdf(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep = ""), height = 6.5, width = 10)
-            plotMA(res, main = paste(levels(dds$Condition)[1], "vs", levels(dds$Condition)[2], "Diferential Expresion in", File, "samples", RNAs, "analysis\n", sep = " "), ylim=c(-10,10))
-            abline(h=c(-1,1), col="dodgerblue", lwd=2)
-            dev.off()
-            bitmap <- pdf_render_page(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep = ""), page = 1, dpi = 300)
-           png::writePNG(bitmap, paste(Result_directory, File, "_samples_all_controls_", RNAs, "_MA_plot.png", sep = "")) #####################
-            unlink(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep = ""))
-            write.csv( res, file=paste(Result_directory, File, "_samples_all_controls_", RNAs,"_", levels(dds$Condition)[1], "_vs_", levels(dds$Condition)[2],"_DE.tab", sep= ""))#######################
-        }
+                    mdp(cts2, mdp_samples, control_lab = "Normal", file_name = paste(File, "_all_controls_", sep = ""), measure = "mean", directory = Result_directory)
+                    dds <- DESeqDataSetFromMatrix(countData = cts, colData = coldata, design = ~ Condition)
+                    keep <- rowSums(counts(dds)) > length(cts) ## Pre-Filtering
+                    dds <- dds[keep,]
+                    dds$Condition <- factor(dds$Condition, levels = c("Normal","Tumoral"))
+                    dds$Condition <- droplevels(dds$Condition)
+                    dds <- DESeq(dds, fitType="local", parallel = TRUE)
+                    vsd <- varianceStabilizingTransformation(dds, blind=FALSE)
+                    pcaData <- plotPCA(vsd, intgroup=c("Condition", "Subtype"), returnData=TRUE)
+                    percentVar <- round(100 * attr(pcaData, "percentVar"))
+                    p <- ggplot(pcaData, aes(PC1, PC2, color=Condition, shape=Subtype)) +
+                      ggtitle(paste(File, "samples for", RNAs, "\n diferential expression analysis", sep = " ")) +
+                      theme(plot.title = element_text(hjust = 0.5, size=14, face="bold.italic"), axis.title.x =element_text(size=12), axis.title.y = element_text(size=12), legend.title = element_text(face = "bold")) +
+                      geom_point(size=1) +
+                      xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+                      ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+                     coord_fixed() +
+                     scale_color_manual(values=c("#56B4E9", "red"))
+                    ggsave(paste(Result_directory, File, "_samples_all_controls_", RNAs, "_PCA_plot.png", sep = ""), plot = p, width = 8.5, height = 8.5, dpi = 300, units = "in") #####################
+                   res <- results(dds, parallel = TRUE)
+                    pdf(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep = ""), height = 6.5, width = 10)
+                    plotMA(res, main = paste(levels(dds$Condition)[1], "vs", levels(dds$Condition)[2], "Diferential Expresion in", File, "samples", RNAs, "analysis\n", sep = " "), ylim=c(-10,10))
+                    abline(h=c(-1,1), col="dodgerblue", lwd=2)
+                    dev.off()
+                    bitmap <- pdf_render_page(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep = ""), page = 1, dpi = 300)
+                   png::writePNG(bitmap, paste(Result_directory, File, "_samples_all_controls_", RNAs, "_MA_plot.png", sep = "")) #####################
+                    unlink(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep = ""))
+                    write.csv( res, file=paste(Result_directory, File, "_samples_all_controls_", RNAs,"_", levels(dds$Condition)[1], "_vs_", levels(dds$Condition)[2],"_DE.tab", sep= ""))}}
         if (my.mode == 1){
                 system(paste("tar -czvf", paste("resultados_", RNAs, "-gene_level.tar.gz", sep =""), Result_directory, sep = " "))}
         if (my.mode == 2){
@@ -247,3 +276,6 @@ if (my.mode == 1){
         system(paste("scp ", "resultados*.tar.gz ",Taruca_adolfo_tesis, sep = ""))}
 if (my.mode == 2){
         system(paste("scp ", "corregido*.tar.gz ",Taruca_adolfo_tesis, sep = ""))}
+}
+message_to_bot <- 'Script Finalizado:\n"Analisis de muestras y expresion diferencial"'
+bot$sendMessage(chat_id, text = message_to_bot)
