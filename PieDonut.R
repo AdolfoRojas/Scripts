@@ -449,7 +449,7 @@ library(pdftools)
 library(ggforce)
 library(grid)
 setwd("../Tesis")
-file2 <- "Samples_Subtype_BCa.tsv"
+file2 <- "2_sample_annot_corregido.tab"
 
 df_plot1 <- read.table(file2, header=T, sep = "\t")
 df_plot1 <- df_plot1[ which(df_plot1$BRCA_Subtype_PAM50!='Normal'), ] # 1192 M, 1042 P
@@ -463,20 +463,43 @@ levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "LumA
 levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "LumB"] <- "Luminal B"
 levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "Her2"] <- "HER2"
 length(unique(df_plot1$patient))
-
+estadios_Basal <- ""
+estadios_HER2 <- ""
+estadios_LuminalA <- ""
+estadios_LuminalB <- ""
 for (subtype in levels(df_plot1$BRCA_Subtype_PAM50)){
+        df_color <- ""
+        subtype_inloop <- ""
+        if (subtype =="Basal") {
+           df_color <- "#F8766D"}
+        if (subtype =="HER2") {
+           df_color <- "#7CAE00"}
+        if (subtype =="Luminal A") {
+           df_color <- "#00BFC4"}
+        if (subtype =="Luminal B") {
+           df_color <- "#C77CFF"}
+        if (subtype =="Basal" | subtype =="HER2"){
+                subtype_inloop <- subtype
+        } else if (subtype =="Luminal B") {
+           subtype_inloop <- "LuminalB"
+        } else if (subtype =="Luminal A") {
+                subtype_inloop <- "LuminalA"
+        }
         df_plotx <-df_plot1[df_plot1$BRCA_Subtype_PAM50 == subtype,]
         write.table(df_plotx, sep = "\t", file = "df_plotx", row.names = F, quote = F, col.names = T)
         df_plotx <- read.table("df_plotx", header=T, sep = "\t")
-        pdf("df_plotx.pdf", height = 8.5, width = 8.5)
-        PieDonut(df_plotx,aes(pies=BRCA_Subtype_PAM50,donuts=pathologic_stage),mainCol="#C77CFF", title=subtype, ratioByGroup=T, showPieName=FALSE, r0=0,r1=0.3,r2=0.6, labelpositionThreshold = 0.05, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 7, donutLabelSize = 5)
+        #pdf("df_plotx.pdf", height = 8.5, width = 8.5)
+        p1 <- PieDonut(df_plotx[df_plotx$sample_type != "NT",],aes(pies=BRCA_Subtype_PAM50,donuts=pathologic_stage),mainCol=df_color, title=NULL, ratioByGroup=T, showPieName=FALSE, r0=0,r1=0.3,r2=0.6, labelpositionThreshold = 0.05, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 7, donutLabelSize = 5)
+        nam_final_beta_auto <- paste("estadios_", subtype, sep = "")
+        assign(nam_final_beta_auto, p1)
         #PieDonut(df_plotx,aes(pies=BRCA_Subtype_PAM50, donuts=sample_Type), title=subtype, ratioByGroup=T, showPieName=FALSE, r0=0, labelpositionThreshold = 0.5, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 5, donutLabelSize = 5)
-        dev.off()
-        bitmap <- pdf_render_page("df_plotx.pdf", page = 1, dpi = 300)
-        png::writePNG(bitmap, paste(subtype, "_df_plotx.png",sep = ""))
-        unlink("df_plotx.pdf")
+        #dev.off()
+        #bitmap <- pdf_render_page("df_plotx.pdf", page = 1, dpi = 300)
+        #png::writePNG(bitmap, paste(subtype, "_df_plotx.png",sep = ""))
+        #unlink("df_plotx.pdf")
         unlink("df_plotx")
         remove(df_plotx)}
+ggarrange(estadios_Basal, estadios_HER2,estadios_LuminalA,estadios_LuminalB, labels = c("A", "B", "C", "D"), ncol = 2, nrow = 2)
 
 
 # Colores designados en imagen Subtipos tumorales para cada subtipo      "#F8766D" "#7CAE00" "#00BFC4" "#C77CFF"  # Basal- Her2 - LumA - LumB

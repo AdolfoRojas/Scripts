@@ -71,6 +71,7 @@ int_df <- int_df[c("protein1","protein2")]
 print(dim(int_df))
 int_df <- int_df[int_df$protein1 %in% rownames(expr0),]
 int_df <- int_df[int_df$protein2 %in% rownames(expr0),]
+int_df <- int_df[!duplicated(int_df),]
 print(dim(int_df))
 write.table(int_df, file = "2_interacciones_sobre_700_gene_symbol_in_GTEx.tab", row.names = F, quote = F, col.names = T, sep = "\t") 
 
