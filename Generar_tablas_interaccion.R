@@ -12,6 +12,7 @@ tfs_int <- tfs_int[!duplicated(tfs_int),]
 tfs_int2 <- tfs_int
 names(tfs_int2) <- c("element2","element1")
 tfs_int <- rbind(tfs_int,tfs_int2)
+tfs_int <- tfs_int[!duplicated(tfs_int),]
 tfs_int$int_type <- "TF-Target"
 ## Co-Expression
 coex_modules <- read.delim("co-expression/subtipos_vs_normal/Tables/module.tsv")
@@ -26,19 +27,32 @@ coex_int <- coex_int[!duplicated(coex_int),]
 ## ceRNA
 load("Sponge/1_entorno_completo_sponge2.RData")
 ceRNA_int <- ceRNA_interactions_fdr[c("geneA","geneB")]
+names(ceRNA_int) <- c("element2","element1")
+ceRNA_int <- ceRNA_int[!duplicated(ceRNA_int),]
+ceRNA_int2 <- ceRNA_int
+names(ceRNA_int2) <- c("element1","element2")
+ceRNA_int <- rbind(ceRNA_int2,ceRNA_int)
+
+ceRNA_int$int_type <- "ceRNA"
+ceRNA_int <- ceRNA_int[!duplicated(ceRNA_int),]
+
+
 head(genes_miRNA_candidates)
-genes_miRNA_candidates2 <- NULL
 for (interactor in names(genes_miRNA_candidates)){
    if (length(genes_miRNA_candidates[[interactor]][,1]) != 0){
       for(i in 1:length(genes_miRNA_candidates[[interactor]][,1])){
          genes_miRNA_candidates2 <- rbind(genes_miRNA_candidates2,as.data.frame(cbind(interactor, genes_miRNA_candidates[[interactor]][i,])))}}}
+genes_miRNA_candidates2$coefficient <- NULL
+names(genes_miRNA_candidates2) <- c("element2","element1")
+genes_miRNA_candidates3 <- genes_miRNA_candidates2
+names(genes_miRNA_candidates3) <- c("element1","element2")
+genes_miRNA_candidates2 <- rbind(genes_miRNA_candidates2,genes_miRNA_candidates3)
+genes_miRNA_candidates2 <- genes_miRNA_candidates2[!duplicated(genes_miRNA_candidates2),]
+genes_miRNA_candidates2$int_type <- "miRNA-mRNA"
 
+genes_miRNA_candidates2 <- genes_miRNA_candidates2[!duplicated(genes_miRNA_candidates2),]
 
+final_int <- rbind(ceRNA_int,coex_int, tfs_int, protein_int, genes_miRNA_candidates2)
+write.table(final_int, sep = "\t", file = "final_interaction.tab", row.names = F, quote = F, col.names = T)
 
-
-
-
-
-
-
-tfs_int[tfs_int$element1 == "ATF7IP" & tfs_int$element2 == "ADNP",]
+protein_int[protein_int$element1 == "KIF13B" & protein_int$element2 == "ARF5",]
