@@ -463,30 +463,53 @@ df_plot1$BRCA_Subtype_PAM50 <- as.factor(df_plot1$BRCA_Subtype_PAM50)
 levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "LumA"] <- "Luminal A"
 levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "LumB"] <- "Luminal B"
 levels(df_plot1$BRCA_Subtype_PAM50)[levels(df_plot1$BRCA_Subtype_PAM50) == "Her2"] <- "HER2"
+df_plot1[is.na(df_plot1$pathologic_stage),]$pathologic_stage <- "N.I."
+df_plot1[df_plot1$pathologic_stage == "Stage_I",]$pathologic_stage <- "Etapa 1"
+df_plot1[df_plot1$pathologic_stage == "Stage_II",]$pathologic_stage <- "Etapa 2"
+df_plot1[df_plot1$pathologic_stage == "Stage_III",]$pathologic_stage <- "Etapa 3"
+df_plot1[df_plot1$pathologic_stage == "Stage_IV",]$pathologic_stage <- "Etapa 4"
 length(unique(df_plot1$patient))
+
+df_plotx <-df_plot1
+write.table(df_plotx, sep = "\t", file = "df_plotx", row.names = F, quote = F, col.names = T)
+df_plotx <- read.table("df_plotx", header=T, sep = "\t")
+jpeg(filename="muestras_todos_subtipos_controles.jpg", width = 1080, height = 1080, pointsize = 300, quality = 100, bg = "white")
+PieDonut(df_plotx,aes(pies=BRCA_Subtype_PAM50, donuts=sample_type), title=NULL, 
+ratioByGroup=T, showPieName=FALSE, r0=0, labelpositionThreshold = 0.005, titlesize = 15, 
+showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 10, donutLabelSize = 5)
+dev.off()
+
 
 df_plotx <-df_plot1[df_plot1$sample_type == "TP",]
 write.table(df_plotx, sep = "\t", file = "df_plotx", row.names = F, quote = F, col.names = T)
 df_plotx <- read.table("df_plotx", header=T, sep = "\t")
-
-PieDonut(df_plotx,aes(pies=BRCA_Subtype_PAM50, donuts=race), title=NULL, 
+jpeg(filename="muestras_todos_subtipos_estadios.jpg", width = 1080, height = 1080, pointsize = 300, quality = 100, bg = "white")
+PieDonut(df_plotx,aes(pies=BRCA_Subtype_PAM50, donuts=pathologic_stage), title=NULL, 
 ratioByGroup=T, showPieName=FALSE, r0=0, labelpositionThreshold = 0.5, titlesize = 15, 
-showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 5, donutLabelSize = 4)
+showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 10, donutLabelSize = 5)
+dev.off()
+unlink("df_plotx")
 
-p1 <- ""
-p2 <- ""
-p3 <- ""
-p4 <- ""
+df_plot1[df_plot1$pathologic_stage == "Etapa 1",]$pathologic_stage <- "I"
+df_plot1[df_plot1$pathologic_stage == "Etapa 2",]$pathologic_stage <- "II"
+df_plot1[df_plot1$pathologic_stage == "Etapa 3",]$pathologic_stage <- "III"
+df_plot1[df_plot1$pathologic_stage == "Etapa 4",]$pathologic_stage <- "IV"
+
 library(jpeg)
-plot_jpeg = function(path, add=FALSE)
-{
+plot_jpeg = function(path, add=FALSE){
   require('jpeg')
-  jpg = readJPEG(path, native=T) # read the file
+  jpg = readJPEG(path, native=T) # read the file  
   res = dim(jpg)[2:1] # get the resolution, [x, y]
-  if (!add) # initialize an empty plot area if add==FALSE
-    plot(1,1,xlim=c(1,res[1]),ylim=c(1,res[2]),asp=1,type='n',xaxs='i',yaxs='i',xaxt='n',yaxt='n',xlab='',ylab='',bty='n')
-  rasterImage(jpg,1,1,res[1],res[2])
-}
+  if (!add) # initialize an empty plot area if add==FALSE  
+  plot(1,1,xlim=c(1,res[1]),ylim=c(1,res[2]),asp=1,type='n',xaxs='i',yaxs='i',xaxt='n',yaxt='n',xlab='',ylab='',bty='n')
+  #rasterImage(jpg,1,1,res[1],res[2])
+  rasterImage(jpg,-150,-150,620,620)
+  }
+at = 5
+line = -0.5
+cex = 0.3
+side = 3
+adj=-0.05
 jpeg(filename="somefile.jpg", width = 1080, height = 1080, pointsize = 300, quality = 100, bg = "white")
 par(mfrow=c(2,2), mai=c(0.01,0.01,0.02,0.01)) 
 for (subtype in levels(df_plot1$BRCA_Subtype_PAM50)){
@@ -500,9 +523,11 @@ for (subtype in levels(df_plot1$BRCA_Subtype_PAM50)){
                 jpeg(filename=paste(subtype, "_somefile.jpg"), width = 540, height = 540, pointsize = 300, quality = 100, bg = "white")
                 PieDonut(df_plotx[df_plotx$sample_type != "NT",],aes(pies=BRCA_Subtype_PAM50,donuts=pathologic_stage),mainCol=df_color, 
                 title=NULL, ratioByGroup=T, showPieName=FALSE, r0=0,r1=0.3,r2=0.6, labelpositionThreshold = 0.05, titlesize = 15, 
-                showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 9, donutLabelSize = 6)
+                showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 9, donutLabelSize = 5)
                 dev.off()
                 plot_jpeg(paste(subtype, "_somefile.jpg"))
+                mtext("A", side=side, line=line, cex=cex, adj=adj, at = at)
+                unlink(paste(subtype, "_somefile.jpg"))
                 }
         if (subtype =="HER2") {
                 df_color <- "#7CAE00"                           
@@ -512,9 +537,11 @@ for (subtype in levels(df_plot1$BRCA_Subtype_PAM50)){
                 jpeg(filename=paste(subtype, "_somefile.jpg"), width = 540, height = 540, pointsize = 300, quality = 100, bg = "white")
                 PieDonut(df_plotx[df_plotx$sample_type != "NT",],aes(pies=BRCA_Subtype_PAM50,donuts=pathologic_stage),mainCol=df_color, 
                 title=NULL, ratioByGroup=T, showPieName=FALSE, r0=0,r1=0.3,r2=0.6, labelpositionThreshold = 0.05, titlesize = 15, 
-                showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 9, donutLabelSize = 6)
+                showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 9, donutLabelSize = 5)
                 dev.off()
                 plot_jpeg(paste(subtype, "_somefile.jpg"))
+                mtext("B", side=side, line=line, cex=cex, adj=adj, at = at)
+                unlink(paste(subtype, "_somefile.jpg"))
                 }
 
         if (subtype =="Luminal A") {
@@ -524,10 +551,12 @@ for (subtype in levels(df_plot1$BRCA_Subtype_PAM50)){
                 df_plotx <- read.table("df_plotx", header=T, sep = "\t")
                 jpeg(filename=paste(subtype, "_somefile.jpg"), width = 540, height = 540, pointsize = 300, quality = 100, bg = "white")
                 PieDonut(df_plotx[df_plotx$sample_type != "NT",],aes(pies=BRCA_Subtype_PAM50,donuts=pathologic_stage),mainCol=df_color, 
-                title=NULL, ratioByGroup=T, showPieName=FALSE, r0=0,r1=0.3,r2=0.6, labelpositionThreshold = 0.05, titlesize = 15, 
-                showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 9, donutLabelSize = 6)
+                title=NULL, ratioByGroup=T, showPieName=FALSE, r0=0,r1=0.3,r2=0.6, labelpositionThreshold = 0.00001, titlesize = 15, 
+                showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 9, donutLabelSize = 5)
                 dev.off()
                 plot_jpeg(paste(subtype, "_somefile.jpg"))
+                mtext("C", side=side, line=line, cex=cex, adj=adj, at = at)
+                unlink(paste(subtype, "_somefile.jpg"))
                 }
 
         if (subtype =="Luminal B") {
@@ -538,41 +567,41 @@ for (subtype in levels(df_plot1$BRCA_Subtype_PAM50)){
                 jpeg(filename=paste(subtype, "_somefile.jpg"), width = 540, height = 540, pointsize = 300, quality = 100, bg = "white")
                 PieDonut(df_plotx[df_plotx$sample_type != "NT",],aes(pies=BRCA_Subtype_PAM50,donuts=pathologic_stage),mainCol=df_color, 
                 title=NULL, ratioByGroup=T, showPieName=FALSE, r0=0,r1=0.3,r2=0.6, labelpositionThreshold = 0.05, titlesize = 15, 
-                showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 9, donutLabelSize = 6)
+                showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 9, donutLabelSize = 5)
                 dev.off()
                 plot_jpeg(paste(subtype, "_somefile.jpg"))
-                }}
+                mtext("D", side=side, line=line, cex=cex, adj=adj, at = at)
+                unlink(paste(subtype, "_somefile.jpg"))
+                }
+        unlink("df_plotx")}
  dev.off()
+ plot_jpeg2 = function(path, add=FALSE){
+  require('jpeg')
+  jpg = readJPEG(path, native=T) # read the file  
+  res = dim(jpg)[2:1] # get the resolution, [x, y]
+  if (!add) # initialize an empty plot area if add==FALSE  
+  plot(1,1,xlim=c(1,res[1]),ylim=c(1,res[2]),asp=1,type='n',xaxs='i',yaxs='i',xaxt='n',yaxt='n',xlab='',ylab='',bty='n')
+  rasterImage(jpg,1,1,res[1],res[2])
+ }
+  plot_jpeg3 = function(path, add=FALSE){
+  require('jpeg')
+  jpg = readJPEG(path, native=T) # read the file  
+  res = dim(jpg)[2:1] # get the resolution, [x, y]
+  if (!add) # initialize an empty plot area if add==FALSE  
+  plot(1,1,xlim=c(1,res[1]),ylim=c(1,res[2]),asp=1,type='n',xaxs='i',yaxs='i',xaxt='n',yaxt='n',xlab='',ylab='',bty='n')
+  rasterImage(jpg,
+  ((res[1]*1.15)-res[1])*-1,
+  ((res[2]*1.15)-res[2])*-1,
+  res[1]*1.15,
+  res[2]*1.15)
+ }
 
-
-        #if (subtype =="Basal" | subtype =="HER2"){
-        #        subtype_inloop <- subtype
-        #} else if (subtype =="Luminal B") {
-        #   subtype_inloop <- "LuminalB"
-        #} else if (subtype =="Luminal A") {
-        #        subtype_inloop <- "LuminalA"
-        #}
-        #df_plotx <-df_plot1[df_plot1$BRCA_Subtype_PAM50 == subtype,]
-        #write.table(df_plotx, sep = "\t", file = "df_plotx", row.names = F, quote = F, col.names = T)
-        #df_plotx <- read.table("df_plotx", header=T, sep = "\t")
-        #pdf("df_plotx.pdf", height = 8.5, width = 8.5)
-        #p1 <- recordPlot(PieDonut(df_plotx[df_plotx$sample_type != "NT",],aes(pies=BRCA_Subtype_PAM50,donuts=pathologic_stage),mainCol=df_color, title=NULL, ratioByGroup=T, showPieName=FALSE, r0=0,r1=0.3,r2=0.6, labelpositionThreshold = 0.05, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 7, donutLabelSize = 5))
-        #nam_final_beta_auto <- paste("estadios_", subtype_inloop, sep = "")
-        #assign(nam_final_beta_auto, p1)
-        #print(nam_final_beta_auto)
-        #get(nam_final_beta_auto) <- get(nam_final_beta_auto)
-        #nam_final_beta_auto
-        #PieDonut(df_plotx,aes(pies=BRCA_Subtype_PAM50, donuts=sample_Type), title=subtype, ratioByGroup=T, showPieName=FALSE, r0=0, labelpositionThreshold = 0.5, titlesize = 15, showRatioThreshold = getOption("PieDonut.showRatioThreshold", 0.001),  pieLabelSize = 5, donutLabelSize = 5)
-        #dev.off()
-        #bitmap <- pdf_render_page("df_plotx.pdf", page = 1, dpi = 300)
-        #png::writePNG(bitmap, paste(subtype, "_df_plotx.png",sep = ""))
-        #unlink("df_plotx.pdf")
- #p1 <- plot(p1)
-ggarrange(p1, p2,p3,p4, labels = c("A", "B", "C", "D"), ncol = 2, nrow = 2)
-#par(mfrow=c(2,2)) 
-###plot(load.image("Luminal A _somefile.jpg"))
-#p1 <- plot(load.image("Luminal A _somefile.jpg"))
-#p1 <- readJPEG("Luminal A _somefile.jpg", native = TRUE)
-
-#p1# Colores designados en imagen Subtipos tumorales para cada subtipo      "#F8766D" "#7CAE00" "#00BFC4" "#C77CFF"  # Basal- Her2 - LumA - LumB
-
+jpeg(filename="muestras_todos_subtipos_controles_estadios.jpg", width = 1920, height = 1080, pointsize = 300, quality = 100, bg = "white")
+par(mfrow=c(1,2), mar=c(0.1,0.1,0.1,0.1)) 
+#par(cex=0.7, mai=c(0.1,0.1,0.2,0.1))
+plot_jpeg3("muestras_todos_subtipos_controles.jpg")
+text(label = "Subtipos PAM50", x = 550, y = 1100, cex = 0.25, font = 2)#, side = 3, line = 0, outer = FALSE, cex = 105, adj = 1, at = 5)
+#par(fig=c(0.1,0.5,0,1), new=TRUE)
+plot_jpeg2("somefile.jpg")
+#par(fig=c(0.8,1,0,1), new=TRUE)
+dev.off()
