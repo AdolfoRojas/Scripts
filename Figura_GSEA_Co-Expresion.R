@@ -1,9 +1,9 @@
+#!/usr/bin/env Rscript
 library(ggplot2)
 library(stringr)
 library(tidyr)
-library(pdftools)
-require(gridExtra)
-setwd("../Tesis/co-expresion")
+library(jpeg)
+library(ggpubr)
 file <- read.delim("normal_vs_tumoral/Tables/enrichment_nes.tsv")
 colnames(file)[1] <- "Modules"
 df <- pivot_longer(file, cols=2:3, names_to = "Class", values_to = "NES")
@@ -20,24 +20,18 @@ df2$Modules <- factor(df2$Modules,levels=rev(unique(df2$Modules)))
 
 
 
-p <- ggplot(df, aes(Class, Modules)) +
-  ggtitle("A")+
+p <- ggplot(df, aes(Class, Modules)) +  
   geom_point(aes(size = abs(NES), colour=NES)) +
   scale_colour_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
   theme_minimal() + theme(plot.title = element_text(face = "bold.italic", hjust= -0.1, size = 24)) + 
   labs(size = "NES")
 
-q <- ggplot(df2, aes(Class, Modules)) +
-  ggtitle("B")+
+q <- ggplot(df2, aes(Class, Modules)) +  
   geom_point(aes(size = abs(NES), colour=NES)) +
   scale_colour_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
   theme_minimal()+ theme(plot.title = element_text(face = "bold.italic", hjust= -0.1, size = 24)) + 
   labs(size = "NES") + theme(legend.position = "none")
 
-
-pdf("GSEA_co-expresion.pdf", height = 9, width =16)
-grid.arrange(p, q, ncol=2)
-dev.off()
-bitmap <- pdf_render_page("GSEA_co-expresion.pdf", page = 1, dpi = 600)
-png::writePNG(bitmap, "GSEA_co-expresion.png")
-unlink("GSEA_co-expresion.pdf")
+ggarrange(p, q, labels = c("A", "B"), ncol = 2, nrow = 1)
+ggsave("Figura_GSEA_co-expresion.png", width = 16, height = 9, dpi = 600, units = "in")
+system("scp Figura_GSEA_co-expresion.png adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/Figura_GSEA_co-expresion.png")

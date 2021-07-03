@@ -1,10 +1,9 @@
 #!/usr/bin/env Rscript
-setwd("../Tesis/Expresion Diferencial")
 subtipos <- c("Her2", "LumB", "LumA", "Basal")
 
 df <- data.frame()
 for (subtype in subtipos){
-  de_inicial <- read.delim(paste("Resultados_expresion_diferencial_mRNAs/", subtype,"_samples_all_controls_mRNAs_Normal_vs_Tumoral_DE.tab", sep = ""), sep = ",")
+  de_inicial <- read.delim(paste("Corregido_resultados_expresion_diferencial_mRNAs-gene_level/", subtype,"_samples_all_controls_mRNAs_Normal_vs_Tumoral_DE.tab", sep = ""), sep = ",")
   colnames(de_inicial)[1] <- "Transcrito"
   de_inicial$subtype <- subtype
   de_inicial <- de_inicial[de_inicial$padj < 0.05,]
@@ -18,7 +17,7 @@ names(gencode)[2] <- "biotype"
 df <- merge(df, gencode, by.x = "Transcrito", by.y = "gene_id")
 df2 <- data.frame()
 for (subtype in subtipos){
-  de_inicial <- read.delim(paste("Resultados_expresion_diferencial_miRNAs/", subtype,"_samples_all_controls_miRNAs_Normal_vs_Tumoral_DE.tab", sep = ""), sep = ",")
+  de_inicial <- read.delim(paste("Corregido_resultados_expresion_diferencial_miRNAs-gene_level/", subtype,"_samples_all_controls_miRNAs_Normal_vs_Tumoral_DE.tab", sep = ""), sep = ",")
   colnames(de_inicial)[1] <- "Transcrito"
   de_inicial$subtype <- subtype
   de_inicial$biotype <- "miRNA"
@@ -139,6 +138,53 @@ venn.diagram(
   fontface = "bold",
   fontfamily = "sans")
 
+venn.diagram(
+  x = list(df2[df2$subtype == "Basal" & df2$log2FoldChange > 0,]$Transcrito,
+  df2[df2$subtype == "Her2" & df2$log2FoldChange > 0,]$Transcrito,
+  df2[df2$subtype == "Luminal A" & df2$log2FoldChange > 0,]$Transcrito, 
+  df2[df2$subtype == "Luminal B" & df2$log2FoldChange > 0,]$Transcrito),
+  category.names = c("Basal","Her2", "Luminal A" , "Luminal B"),
+  filename = 'Venn_DE_miRNA_up.png',
+  output=TRUE,
+  # Output features
+  imagetype="png" ,
+  height = 1080 , 
+  width = 1920 , 
+  resolution = 600,
+  compression = "lzw",
+  # Circles
+  lwd = 2,
+  lty = 'blank',
+  fill = myCol,
+  # Numbers
+  cex = .6,
+  fontface = "bold",
+  fontfamily = "sans")
+
+venn.diagram(
+  x = list(df2[df2$subtype == "Basal" & df2$log2FoldChange < 0,]$Transcrito,
+  df2[df2$subtype == "Her2" & df2$log2FoldChange < 0,]$Transcrito,
+  df2[df2$subtype == "Luminal A" & df2$log2FoldChange < 0,]$Transcrito, 
+  df2[df2$subtype == "Luminal B" & df2$log2FoldChange < 0,]$Transcrito),
+  category.names = c("Basal","Her2", "Luminal A" , "Luminal B"),
+  filename = 'Venn_DE_miRNA_down.png',
+  output=TRUE,
+  # Output features
+  imagetype="png" ,
+  height = 1080 , 
+  width = 1920 , 
+  resolution = 600,
+  compression = "lzw",
+  # Circles
+  lwd = 2,
+  lty = 'blank',
+  fill = myCol,
+  # Numbers
+  cex = .6,
+  fontface = "bold",
+  fontfamily = "sans")
+   
+system("scp Venn_DE_*.png adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/")
 
 
 
@@ -195,4 +241,5 @@ Others <- ggplot(counts4, aes(x = Subtype, y = Regulation)) +
         axis.text=element_text(size=16), plot.title = element_text(face = "bold", hjust = 0.5), axis.text.y = element_blank())
 require(gridExtra)
 plot_all <- grid.arrange(protein_coding, lncRNA, miRNA, Others, ncol=2, nrow = 2)
-ggsave(plot = plot_all,filename = "Figura_2_avance.png", height = 9, width = 16, dpi = 600)
+ggsave(plot = plot_all,filename = "Figura_DE_genes.png", height = 9, width = 16, dpi = 600)
+system("scp Figura_DE_genes.png adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/Figura_DE_genes.png")
