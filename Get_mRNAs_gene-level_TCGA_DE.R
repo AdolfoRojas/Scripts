@@ -7,7 +7,7 @@ library(BiocParallel)
 library(telegram.bot)
 bot = Bot(token = bot_token("AARH_95_bot"))
 chat_id <- bot_token("chat_id")
-register(MulticoreParam(40))
+register(MulticoreParam(15))
 Taruca_adolfo_tesis <- "adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/Resultados_Tesis/"
 system("mkdir -p Resultados_expresion_diferencial_mRNAs-gene_level")
 system("mkdir -p Resultados_expresion_diferencial_miRNAs-gene_level")
@@ -15,8 +15,6 @@ system("mkdir -p Corregido_resultados_expresion_diferencial_miRNAs-gene_level")
 system("mkdir -p Corregido_resultados_expresion_diferencial_mRNAs-gene_level")
 #my.mode <- 2
 for (my.mode in 1:2) {
-#while (my.mode!=1 | my.mode != 2){
-#my.mode <- readline(prompt="Enter mode: \n(1 = Descargar y analizar)\n(2 = Ajustar y re-analizar)")
 print(my.mode)
 #######################################################################################################################################
 # Contiene el script tesis/3_co-expresion_analysis/1_Get_mRNAs_gene-level_FPKM_TCGA_matrix.R
@@ -36,14 +34,6 @@ if (my.mode == 1) {
         GDCdownload(query = queryDown.miR, directory = DataDirectory)
         dataAssy.miR <- GDCprepare(query = queryDown.miR, save = TRUE, save.filename = FileNameData, summarizedExperiment = TRUE, directory =DataDirectory)
         matrix <- assay(dataAssy.miR,"HTSeq - Counts")
-        #matrix2 <- t(matrix)
-        #matrix3 <- as.data.frame(matrix2)
-        #matrix3$patient_sample <- substring(rownames(matrix3), 1, 15)
-        #matrix3[,-which(names(matrix3)=="patient_sample")] <- mutate_all(matrix3[,-which(names(matrix3)=="patient_sample")], function(x) as.numeric(as.character(x)))        
-        #matrix4 <- aggregate(matrix3[,-which(names(matrix3)=="patient_sample")], list(matrix3$patient_sample), mean)
-        #rownames(matrix4) <- matrix4$Group.1
-        #matrix4$Group.1 <- NULL
-        #matrix <- round(as.data.frame(t(matrix4))) 
         write.table(matrix, sep = "\t", file = "1_mRNAs_gene-level_Counts_TCGA_matrix.tab", row.names = T, quote = F, col.names = T)
         #######################################################################################################################################
         #              miRNAs  contiene el script tesis/1_expression_data/TCGA_data/5_Get_miRNAs_count_matrix.R
@@ -61,32 +51,10 @@ if (my.mode == 1) {
         matrix <- dataAssy.miR[, read_countData]
         colnames(matrix) <- gsub("read_count_","", colnames(matrix))
         names <- rownames(dataAssy.miR)
-        matrix<- cbind(names,matrix)
-        #matrix2 <- t(matrix)
-        #matrix3 <- as.data.frame(matrix2[2:nrow(matrix2),])
-        #matrix3$patient_sample <- substring(rownames(matrix3), 1, 15)
-        #matrix3[,-which(names(matrix3)=="patient_sample")] <- mutate_all(matrix3[,-which(names(matrix3)=="patient_sample")], function(x) as.numeric(as.character(x)))        
-        #matrix4 <- aggregate(matrix3[,-which(names(matrix3)=="patient_sample")], list(matrix3$patient_sample), mean)
-        #rownames(matrix4) <- matrix4$Group.1
-        #matrix4$Group.1 <- NULL
-        #matrix <- round(as.data.frame(t(matrix4)))        
+        matrix<- cbind(names,matrix)      
         write.table(matrix, sep = "\t", file = "miRNAs_counts.tab", row.names = F, quote = F, col.names = T)} 
 #######################################################################################################################################
- #              Tratado de muestras  contiene el script tesis/3_co-expresion_analysis/2_prepare_CEMiTool_data.R
-#######################################################################################################################################
 expr0 <- read.delim("1_mRNAs_gene-level_Counts_TCGA_matrix.tab")
-library(EnsDb.Hsapiens.v86)
-ensembl.genes <- rownames(expr0)
-geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v86, keys= ensembl.genes, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
-for (duplicado in levels(as.factor(geneIDs1[duplicated(geneIDs1$SYMBOL),]$SYMBOL))){
-        count = 0
-        for (elementos in rownames(geneIDs1[geneIDs1$SYMBOL == duplicado,])){
-                count = count + 1
-                geneIDs1$SYMBOL[as.numeric(elementos)] <- paste(duplicado, count, sep = "_")}}
-for (ensembl_gene_id in rownames(expr0)){
-        rownames(expr0)[rownames(expr0)== ensembl_gene_id] <- geneIDs1[geneIDs1$GENEID == ensembl_gene_id,]$SYMBOL}
-if (my.mode == 1) {
-        write.table(geneIDs1, file = "2_gene_ID_to_gene_symbol.tab", row.names = F, quote = F, col.names = T, sep = "\t")}
 #######################################################################################################################################
 sample_annot <- ""
 if (my.mode == 1){
@@ -97,16 +65,12 @@ if (my.mode == 1){
         colnames(sample_annot)[colnames(sample_annot)=="AliquotBarcode"] <- "SampleName"}
 if (my.mode == 2){
         sample_annot <- read.delim("2_sample_annot.tab", sep = "\t") #añadir muestras outliers        
-        #sample_annot <- sample_annot[duplicated(sample_annot$patient) | duplicated(sample_annot$patient,fromLast=T),]
-        #mdp <- read.delim("Resultados_expresion_diferencial_mRNAs-gene_level/all_samples_sample_scores.tsv", sep = " ")
-        #mdp$allgenes.Sample <- gsub("\\.", "-", mdp$perturbedgenes.Sample)
-        #normal_mdp <- mdp[mdp$allgenes.Class == "Normal",]
-        #normal_mdp_disturbed <- tail(normal_mdp[order(normal_mdp$allgenes.Score),]$allgenes.Sample, 10)
-        #sample_annot <- sample_annot[!(sample_annot$SampleName %in% normal_mdp_disturbed),]
+        sample_annot <- sample_annot[duplicated(sample_annot$patient) | duplicated(sample_annot$patient,fromLast=T),]
         cluster_info <- read.delim("cluster_output_miRNAs.tab", sep = "\t", header=FALSE)
         cluster_info2 <- read.delim("cluster_output_mRNAs.tab", sep = "\t", header=FALSE)
         sample_annot <- sample_annot[!(sample_annot$SampleName %in% cluster_info$V1),]
-        sample_annot <- sample_annot[!(sample_annot$SampleName %in% cluster_info2$V1),]}
+        sample_annot <- sample_annot[!(sample_annot$SampleName %in% cluster_info2$V1),]
+        sample_annot <- sample_annot[duplicated(sample_annot$patient) | duplicated(sample_annot$patient,fromLast=T),]}
 colnames(expr0) <- gsub("\\.", "-", colnames(expr0))
 colnames(expr0) <- substring(colnames(expr0), 1, 15)
 #######################################################################################################################################
@@ -132,10 +96,17 @@ expr0 <- expr0$counts
 expr0 <- cpm(expr0, log= F)
 identical(colnames(expr0), sample_annot$SampleName)
 
-if (identical(colnames(expr0), sample_annot$SampleName) == T){
+expr1 <- DGEList(counts = expr1, samples = sample_annot, genes = rownames(expr1), remove.zeros = F, group = sample_annot$sample_type) ### remove zero originalmente en T
+expr1 <- calcNormFactors(expr1, method = "TMM")
+expr1 <- expr1$counts
+expr1 <- cpm(expr1, log= F)
+identical(colnames(expr1), sample_annot$SampleName)
+
+if (identical(colnames(expr0), sample_annot$SampleName) == T & identical(colnames(expr1), sample_annot$SampleName) == T){
         print("guardando tablas y procediendo con anotacion en gene symbol de interacciones proteina-proteina")
         if (my.mode == 1){
-                write.table(expr0, file = "2_mRNAs_gene-level_TMM_TCGA_matrix_with_gene_symbol.tab", row.names = T, quote = F, col.names = T, sep = "\t")
+                write.table(expr1, file = "2_miRNAs_gene-level_TMM_TCGA_matrix.tab", row.names = T, quote = F, col.names = T, sep = "\t")
+                write.table(expr0, file = "2_mRNAs_gene-level_TMM_TCGA_matrix_with_gene_id.tab", row.names = T, quote = F, col.names = T, sep = "\t")
                 write.table(sample_annot, file = "2_sample_annot.tab", row.names = F, quote = F, col.names = T, sep = "\t")}
         if (my.mode == 2){
                 write.table(sample_annot, file = "2_sample_annot_corregido.tab", row.names = F, quote = F, col.names = T, sep = "\t")}}
@@ -159,19 +130,24 @@ for (RNAs in c("mRNAs", "miRNAs")) {
         if (my.mode == 2){Result_directory <- paste("Corregido_resultados_expresion_diferencial_", RNAs, "-gene_level/", sep = "")}
         if (RNAs == "mRNAs") {
            expr0 <- read.delim("1_mRNAs_gene-level_Counts_TCGA_matrix.tab", sep = "\t")
+           expr1 <- read.delim("2_mRNAs_gene-level_TMM_TCGA_matrix_with_gene_id.tab", sep = "\t")
         } else {
            expr0 <- read.delim("miRNAs_counts.tab", sep = "\t", row.names=1)
+           expr1 <- read.delim("2_miRNAs_gene-level_TMM_TCGA_matrix.tab", sep = "\t")
         }
         colnames(expr0) <- gsub("\\.", "-", colnames(expr0))
         colnames(expr0) <- substring(colnames(expr0), 1, 15)        
         matrix <- as.data.frame(expr0)
+        colnames(expr1) <- gsub("\\.", "-", colnames(expr1))
+        colnames(expr1) <- substring(colnames(expr1), 1, 15)        
+        matrix2 <- as.data.frame(expr1)        
         coldata <- sample_data
         cts <- matrix[coldata$column] + 1
         mdp_samples <- coldata
         colnames(mdp_samples) <- c("Sample", "Class", "Subtype")
         mdp_samples <- as.data.frame(mdp_samples)
         head(coldata$column)
-        cts2 <- matrix[coldata$column]
+        cts2 <- matrix2[coldata$column]
         print("antesdelerror?3")
         head(colnames(cts2))
         colnames(cts2) <- gsub("-","\\.",colnames(cts2))
@@ -221,7 +197,7 @@ for (RNAs in c("mRNAs", "miRNAs")) {
         ggsave(paste(Result_directory, "all_samples_", RNAs, "_PCA_plot.png", sep = ""), plot = p, width = 8.5, height = 8.5, dpi = 300, units = "in")
         res <- results(dds, parallel = TRUE)
         pdf(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep= ""), height = 6.5, width = 10)
-        plotMA(res, main = paste(levels(dds$Condition)[1], "vs", levels(dds$Condition)[2], "Diferential Expresion in all samples", RNAs, "analysis\n", sep = " "), ylim=c(-10,10))
+        DESeq2::plotMA(res, main = paste(levels(dds$Condition)[1], "vs", levels(dds$Condition)[2], "Diferential Expresion in all samples", RNAs, "analysis\n", sep = " "), ylim=c(-10,10))
         abline(h=c(-1,1), col="dodgerblue", lwd=2)
         dev.off()
         bitmap <- pdf_render_page(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep = ""), page = 1, dpi = 300)
@@ -236,7 +212,7 @@ for (RNAs in c("mRNAs", "miRNAs")) {
                     mdp_samples <- coldata
                     colnames(mdp_samples) <- c("Sample", "Class", "Subtype")
                     mdp_samples <- as.data.frame(mdp_samples)
-                    cts2 <- matrix[coldata$column]
+                    cts2 <- matrix2[coldata$column]
                     colnames(cts2) <- gsub("-","\\.",colnames(cts2))
                     mdp_samples$Sample <- gsub("-","\\.",mdp_samples$Sample)
 
@@ -261,7 +237,7 @@ for (RNAs in c("mRNAs", "miRNAs")) {
                     ggsave(paste(Result_directory, File, "_samples_all_controls_", RNAs, "_PCA_plot.png", sep = ""), plot = p, width = 8.5, height = 8.5, dpi = 300, units = "in") #####################
                    res <- results(dds, parallel = TRUE)
                     pdf(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep = ""), height = 6.5, width = 10)
-                    plotMA(res, main = paste(levels(dds$Condition)[1], "vs", levels(dds$Condition)[2], "Diferential Expresion in", File, "samples", RNAs, "analysis\n", sep = " "), ylim=c(-10,10))
+                    DESeq2::plotMA(res, main = paste(levels(dds$Condition)[1], "vs", levels(dds$Condition)[2], "Diferential Expresion in", File, "samples", RNAs, "analysis\n", sep = " "), ylim=c(-10,10))
                     abline(h=c(-1,1), col="dodgerblue", lwd=2)
                     dev.off()
                     bitmap <- pdf_render_page(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep = ""), page = 1, dpi = 300)
@@ -273,9 +249,9 @@ for (RNAs in c("mRNAs", "miRNAs")) {
         if (my.mode == 2){
                 system(paste("tar -czvf", paste("corregido_resultados_", RNAs, "-gene_level.tar.gz", sep =""), Result_directory, sep = " "))}}
 if (my.mode == 1){
-        system(paste("scp ", "resultados*.tar.gz ",Taruca_adolfo_tesis, sep = ""))}
+        system(paste("scp ", "resultados*.tar.gz ",Taruca_adolfo_tesis, "Pareados/", sep = ""))}
 if (my.mode == 2){
-        system(paste("scp ", "corregido*.tar.gz ",Taruca_adolfo_tesis, sep = ""))}
+        system(paste("scp ", "corregido*.tar.gz ",Taruca_adolfo_tesis, "Pareados/", sep = ""))}
 }
 message_to_bot <- 'Script Finalizado:\n"Analisis de muestras y expresion diferencial"'
 bot$sendMessage(chat_id, text = message_to_bot)

@@ -5,15 +5,18 @@ Taruca_adolfo_tesis <- "adolfo@200.89.65.156:/run/media/vinicius/run-projects/Ad
 expr0 <- read.delim("1_Female_GTEx_Analysis_2017-06-05_v8_RNASeQCv1.1.9_gene_reads_without_PAR_Y.gct.gz_gene_level.tab", row.names = 1)
 rownames(expr0) <- sapply(strsplit(as.character(rownames(expr0)),'\\.'), "[", 1)
 expr0$Description <- NULL
+
 library(EnsDb.Hsapiens.v86)
 ensembl.genes <- rownames(expr0)
-geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v86, keys= ensembl.genes, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
-for (duplicado in levels(as.factor(geneIDs1[duplicated(geneIDs1$SYMBOL),]$SYMBOL))){
-        count = 0
-        for (elementos in rownames(geneIDs1[geneIDs1$SYMBOL == duplicado,])){
-                count = count + 1
-                geneIDs1$SYMBOL[as.numeric(elementos)] <- paste(duplicado, count, sep = "_")}}
-write.table(geneIDs1, file = "2_gene_ID_to_gene_symbol.tab", row.names = F, quote = F, col.names = T, sep = "\t")
+
+#geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v86, keys= ensembl.genes, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
+#for (duplicado in levels(as.factor(geneIDs1[duplicated(geneIDs1$SYMBOL),]$SYMBOL))){
+#        count = 0
+#        for (elementos in rownames(geneIDs1[geneIDs1$SYMBOL == duplicado,])){
+#                count = count + 1
+#                geneIDs1$SYMBOL[as.numeric(elementos)] <- paste(duplicado, count, sep = "_")}}
+#write.table(geneIDs1, file = "2_gene_ID_to_gene_symbol.tab", row.names = F, quote = F, col.names = T, sep = "\t")
+
 
 raw_RNA <- DGEList(counts = expr0, samples = NULL, genes = rownames(expr0), remove.zeros = F, group = NULL) ### remove zero originalmente en T
 cpm_RNA <- cpm(raw_RNA$counts)
@@ -29,8 +32,8 @@ p1 <- ggplot() + aes(x=mean_log_cpm) +
     ggtitle("Distribution of mean gene expression values") + theme_minimal()
 p2 <- ggplot(df_mean_log_cpm, aes(sample = mean_log_cpm)) + stat_qq() + geom_hline(yintercept=filter_threshold, colour="red") + theme_minimal() + ggtitle("Progression of mean gene expression values")
 ggarrange(p1, p2, labels = c("A", "B"), ncol = 2, nrow = 1)
-ggsave("grafico_pueba.png", width = 16, height = 9, dpi = 600, units = "in")
-system("scp grafico_pueba.png adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo")
+ggsave("Expression_threshold.png", width = 16, height = 9, dpi = 600, units = "in")
+system("scp Expression_threshold.png adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/Resultados_Tesis/Objetivo_2/")
 
 print(mean(raw_RNA$samples$lib.size) * 1e-6)
 print(median(raw_RNA$samples$lib.size) * 1e-6)
@@ -41,18 +44,19 @@ dim(filtered_RNA)
 norm_RNA <- calcNormFactors(filtered_RNA, method = "TMM")
 expr0 <- norm_RNA$counts
 expr0 <- cpm(expr0, log= F)
-expr0 <- expr0[rownames(expr0) %in% geneIDs1$GENEID,] 
+#expr0 <- expr0[rownames(expr0) %in% geneIDs1$GENEID,] 
 
-for (ensembl_gene_id in rownames(expr0)){
-        rownames(expr0)[rownames(expr0)== ensembl_gene_id] <- geneIDs1[geneIDs1$GENEID == ensembl_gene_id,]$SYMBOL}
+#for (ensembl_gene_id in rownames(expr0)){
+#        rownames(expr0)[rownames(expr0)== ensembl_gene_id] <- geneIDs1[geneIDs1$GENEID == ensembl_gene_id,]$SYMBOL}
 
-print("guardando tablas y procediendo con anotacion en gene symbol de interacciones proteina-proteina")
-write.table(expr0, file = "2_mRNAs_gene-level_TMM_GTEx_matrix_with_gene_symbol.tab", row.names = T, quote = F, col.names = T, sep = "\t")
+#print("guardando tablas y procediendo con anotacion en gene symbol de interacciones proteina-proteina")
+write.table(expr0, file = "2_mRNAs_gene-level_TMM_GTEx_matrix_with_geneID.tab", row.names = T, quote = F, col.names = T, sep = "\t") ###############################################################################
 
 p <- read.delim("interactions_above_400_combined_score.txt", sep=" ")
 p <- p[p$combined_score >= 700,]
 p$protein1 <- sapply(strsplit(as.character(p$protein1),'\\.'), "[", 2)
 p$protein2 <- sapply(strsplit(as.character(p$protein2),'\\.'), "[", 2)
+
 geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v86, keys= ensembl.genes, keytype = "GENEID", columns = c("SYMBOL","GENEID","PROTEINID"))
 as <- as.data.frame(levels(as.factor(p$protein1)))
 az <- merge(geneIDs1, as, by.y ="levels(as.factor(p$protein1))", by.x = "PROTEINID")
@@ -62,10 +66,11 @@ count1 = 0
 count2 = 0
 for (Protein1 in levels(as.factor(qw$protein1))){
         count1 = count1 + 1
-        qw[qw$protein1 == Protein1,]$protein1 <- az[az$PROTEINID == Protein1,]$SYMBOL}
+        qw[qw$protein1 == Protein1,]$protein1 <- az[az$PROTEINID == Protein1,]$GENEID}
 for (Protein2 in levels(as.factor(qw$protein2))){
         count2 = count2 + 1
-        qw[qw$protein2 == Protein2,]$protein2 <- az[az$PROTEINID == Protein2,]$SYMBOL}
+        qw[qw$protein2 == Protein2,]$protein2 <- az[az$PROTEINID == Protein2,]$GENEID}
+
 int_df <- as.data.frame(qw)
 int_df <- int_df[c("protein1","protein2")]
 print(dim(int_df))
@@ -74,11 +79,11 @@ int_df <- int_df[int_df$protein2 %in% rownames(expr0),]
 int_df <- int_df[!duplicated(int_df),]
 print(dim(int_df))
 write.table(int_df, file = "2_interacciones_sobre_700_gene_symbol_in_GTEx.tab", row.names = F, quote = F, col.names = T, sep = "\t") 
-
-## Cargar librerya de interacciones
+system(paste("scp ", "2_interacciones_sobre_700_gene_symbol_in_GTEx.tab ",Taruca_adolfo_tesis, "2_interacciones_sobre_700_gene_symbol_in_GTEx.tab", sep = ""))
+## Cargar libreria de interacciones
 library(dorothea) 
 ## Cargar archivo con elementos que se expresan en tejido mamario normalmente
-matrix<- read.delim("2_mRNAs_gene-level_TMM_GTEx_matrix_with_gene_symbol.tab")
+matrix<- read.delim("2_mRNAs_gene-level_TMM_GTEx_matrix_with_geneID.tab")
 reg_info <-  dorothea_hs
 tf_in_breast <- reg_info[reg_info$tf %in% rownames(matrix),]
 tf_in_breast <- tf_in_breast[tf_in_breast$target %in% rownames(matrix),]

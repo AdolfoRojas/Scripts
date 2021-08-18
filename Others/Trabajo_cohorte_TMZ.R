@@ -1,28 +1,34 @@
 #!/usr/bin/env Rscript
 
 setwd("Otros_proyectos/Cohorte_TMZ/")
-tmz_cohort_data <- read.delim("Editado_TMZ_v2.csv", sep = ";")
-tmz_cohort_data$rut <- NULL # Dato no necesario 
-tmz_cohort_data$fecha_ingreso <- NULL # Dato no necesario
-tmz_cohort_data$fecha_nacimiento <- NULL # Dato no necesario
-tmz_cohort_data$ano_inicio <- NULL # Dato no necesario
-tmz_cohort_data$ano_diagnostico <- NULL # Dato no necesario
+if (file.exists("TMZ_cohort_kNN-imputed.tab") == F) {
+   print("No existe")
 
-num <- Filter(is.numeric, tmz_cohort_data)
-non_num <- tmz_cohort_data[,!(names(tmz_cohort_data) %in% names(num))]
-tmz_cohort_data$emr_3_tmz <- as.numeric(as.character(tmz_cohort_data$emr_3_tmz))
-tmz_cohort_data$peso_tmz3 <- as.numeric(as.character(tmz_cohort_data$peso_tmz3))
-tmz_cohort_data$pad_pl2 <- as.numeric(as.character(tmz_cohort_data$pad_pl2))
-tmz_cohort_data$X6mwt_bl_tmz <- as.numeric(as.character(tmz_cohort_data$X6mwt_bl_tmz))
+    tmz_cohort_data <- read.delim("Editado_TMZ_v2.csv", sep = ";")
+    tmz_cohort_data$rut <- NULL # Dato no necesario 
+    tmz_cohort_data$fecha_ingreso <- NULL # Dato no necesario
+    tmz_cohort_data$fecha_nacimiento <- NULL # Dato no necesario
+    tmz_cohort_data$ano_inicio <- NULL # Dato no necesario
+    tmz_cohort_data$ano_diagnostico <- NULL # Dato no necesario
 
-num <- Filter(is.numeric, tmz_cohort_data)
-non_num <- tmz_cohort_data[,!(names(tmz_cohort_data) %in% names(num))]
+    num <- Filter(is.numeric, tmz_cohort_data)
+    non_num <- tmz_cohort_data[,!(names(tmz_cohort_data) %in% names(num))]
+    tmz_cohort_data$emr_3_tmz <- as.numeric(as.character(tmz_cohort_data$emr_3_tmz))
+    tmz_cohort_data$peso_tmz3 <- as.numeric(as.character(tmz_cohort_data$peso_tmz3))
+    tmz_cohort_data$pad_pl2 <- as.numeric(as.character(tmz_cohort_data$pad_pl2))
+    tmz_cohort_data$X6mwt_bl_tmz <- as.numeric(as.character(tmz_cohort_data$X6mwt_bl_tmz))
 
-tmz_cohort_data_NA <- tmz_cohort_data[, sapply(tmz_cohort_data, function(x) sum(is.na(x))) > length(tmz_cohort_data$ID)*0.3]
-tmz_cohort_data <- tmz_cohort_data[, sapply(tmz_cohort_data, function(x) sum(is.na(x))) <= length(tmz_cohort_data$ID)*0.3]
-################ Imputacion ###################################################################
-library(VIM)
-tmz_cohort_data <- kNN(tmz_cohort_data, imp_var = FALSE)
+    num <- Filter(is.numeric, tmz_cohort_data)
+    non_num <- tmz_cohort_data[,!(names(tmz_cohort_data) %in% names(num))]
+
+    tmz_cohort_data_NA <- tmz_cohort_data[, sapply(tmz_cohort_data, function(x) sum(is.na(x))) > length(tmz_cohort_data$ID)*0.3]
+    tmz_cohort_data <- tmz_cohort_data[, sapply(tmz_cohort_data, function(x) sum(is.na(x))) <= length(tmz_cohort_data$ID)*0.3]
+    ################ Imputacion ###################################################################
+    library(VIM)
+    tmz_cohort_data <- kNN(tmz_cohort_data, k = 5, imp_var = FALSE)
+    write.table(tmz_cohort_data, sep = "\t", file = "TMZ_cohort_kNN-imputed.tab", row.names = F, quote = F, col.names = T)}
+#################################################################################################
+tmz_cohort_data <- read.delim("TMZ_cohort_kNN-imputed.tab", sep = "\t")
 nombres <- names(tmz_cohort_data)[grepl("_bl_pl$", names(tmz_cohort_data)) | grepl("_3_pl$", names(tmz_cohort_data)) | grepl("_3_tmz$", names(tmz_cohort_data)) | grepl("_bl_tmz$", names(tmz_cohort_data))]
 library(stringr)
 asdf <- str_replace_all(nombres, "_bl_pl", "")
@@ -69,7 +75,7 @@ Paired_T_test_or_Wilcoxon_TMZ <- function(df_long, titulo) {
         # subset weight data after treatment
         after <- subset(df_long,  Condition == "TMZ 3 Months", Value, drop = TRUE)
         res <- wilcox.test(before, after, paired = TRUE)        
-        return(list(g_s_bl_pl,g_s_3_pl,g_s_3_tmz,"Wilcoxon",res$p.value))} 
+        return(list(g_s_bl_pl,g_s_3_pl,g_s_3_tmz,"Wilcoxon",round(res$p.value,3)))} 
     df_long <- df_long[!grepl("Baseline",df_long$Condition) &  !grepl("_bl_tmz",df_long$Condition),]
     stat.test <- df_long  %>% t_test(Value ~ Condition, paired = TRUE, detailed = TRUE) %>% add_significance()
     magnitud_efecto <- df_long  %>% cohens_d(Value ~ Condition, paired = TRUE)
@@ -82,14 +88,19 @@ Paired_T_test_or_Wilcoxon_TMZ <- function(df_long, titulo) {
     bxp <- bxp + stat_pvalue_manual(stat.test, tip.length = 0, linetype = 2) + labs(subtitle = get_test_label(stat.test, detailed= TRUE))
     
     ggsave(paste("T-tests/", titulo, ".png", sep = ""), plot = bxp, width = 9, height = 8.5, dpi = 300, units = "in")
-    return(list(g_s_bl_pl,g_s_3_pl,g_s_3_tmz,"t-test",stat.test$p, magnitud_efecto))}
-    return(list(g_s_bl_pl,g_s_3_pl,g_s_3_tmz, "t-test", stat.test$p, magnitud_efecto))}
+    estad <- paste(round(stat.test$p,3), stat.test$p.signif, sep = " ")
+    return(list(g_s_bl_pl,g_s_3_pl,g_s_3_tmz,"t-test",estad, magnitud_efecto))}
+    return(list(g_s_bl_pl,g_s_3_pl,g_s_3_tmz, "t-test", round(stat.test$p,3), magnitud_efecto))}
 
 info_det_tmz <- read.delim("info_determinaciones.tsv", sep = ";")
 Tabla_estadistica <- NULL
 for (det in determinaciones) {
     det_data <- tmz_cohort_data[grepl(paste("^", det, "_", sep = ""), names(tmz_cohort_data))  | grepl("ID", names(tmz_cohort_data))]
     det_data <- det_data[grepl("_bl_pl",names(det_data)) | grepl("_3_pl",names(det_data))  | grepl("_bl_tmz",names(det_data))  | grepl("_3_tmz",names(det_data)) | grepl("ID", names(det_data))]
+    
+    if (det == "pcr" | det == "bnp") {
+        det_data[!grepl("ID", names(det_data))] <- log(det_data[!grepl("ID", names(det_data))])}
+
     analisis <- Paired_T_test_or_Wilcoxon_TMZ(det_data, det)
     det_unit <- info_det_tmz[grepl(paste(det,"_bl_pl", sep=""), info_det_tmz$Determinacion),]$Unidad
     det_name <- str_replace(info_det_tmz[grepl(paste(det,"_bl_pl", sep=""), info_det_tmz$Determinacion),]$Nombre,"Baseline ", "")
@@ -97,25 +108,29 @@ for (det in determinaciones) {
        det_name <- str_replace(info_det_tmz[grepl("6mwt_bl_pl", info_det_tmz$Determinacion),]$Nombre,"Baseline ", "")
        det_unit <- info_det_tmz[grepl("6mwt_bl_pl", info_det_tmz$Determinacion),]$Unidad}
     det_unit <- as.character(det_unit)
+    if (det == "pcr" | det == "bnp") {
+        det_unit <- paste("log(", det_unit, ")", sep = "")}
     print(det_unit)       
-    Tabla_estadistica <- rbind(Tabla_estadistica, as.data.frame(cbind(det_name,analisis[[1]],analisis[[2]],analisis[[3]],det_unit, analisis[[4]], round(analisis[[5]],3))))    
+    Tabla_estadistica <- rbind(Tabla_estadistica, as.data.frame(cbind(det_name,analisis[[1]],analisis[[2]],analisis[[3]],det_unit, analisis[[4]], analisis[[5]])))    
     } 
-names(Tabla_estadistica) <- c("Determinacion","Baseline","Placebo 3 Months", "TMZ 3 Months","Unit", "Test", "p-Value") 
+names(Tabla_estadistica) <- c("Characteristic","Baseline","Placebo", "Trimetazidine","Unit", "Test", "p-Value") 
 Tabla_estadistica
 library(kableExtra)
 Tabla_estadistica %>%
-  kbl(caption = "Statistical Analysis of the Trimetazidine Cohort") %>%
+  kbl(caption = "Baseline characteristics and results after 3 months of placebo and after 3 months of Trimetazidine") %>%
   kable_classic(full_width = F, html_font = "Cambria")
 
 Tabla_estadistica2 <- NULL
 for (det in determinaciones) {
     det_data <- tmz_cohort_data[grepl(paste("^", det, "_", sep = ""), names(tmz_cohort_data))  | grepl("ID", names(tmz_cohort_data))]
     det_data <- det_data[grepl("_bl_pl",names(det_data)) | grepl("_3_pl",names(det_data))  | grepl("_bl_tmz",names(det_data))  | grepl("_3_tmz",names(det_data)) | grepl("ID", names(det_data))]
+
+    if (det == "pcr" | det == "bnp") {
+        det_data[!grepl("ID", names(det_data))] <- log(det_data[!grepl("ID", names(det_data))])}
+
     det_data[grepl("_3_tmz", names(det_data))] <- det_data[grepl("_3_tmz", names(det_data))] - det_data[grepl("_bl_pl", names(det_data))]
     det_data[grepl("_3_pl", names(det_data))] <- det_data[grepl("_3_pl", names(det_data))] - det_data[grepl("_bl_pl", names(det_data))]
-    det_data[grepl("_bl_tmz", names(det_data))] <- det_data[grepl("_bl_tmz", names(det_data))] - det_data[grepl("_bl_pl", names(det_data))]
-    #det_data[grepl("_bl_pl", names(det_data))] <- 0
-    
+    det_data[grepl("_bl_tmz", names(det_data))] <- det_data[grepl("_bl_tmz", names(det_data))] - det_data[grepl("_bl_pl", names(det_data))]   
 
     analisis <- Paired_T_test_or_Wilcoxon_TMZ(det_data, det)
     det_unit <- info_det_tmz[grepl(paste(det,"_bl_pl", sep=""), info_det_tmz$Determinacion),]$Unidad
@@ -124,14 +139,40 @@ for (det in determinaciones) {
        det_name <- str_replace(info_det_tmz[grepl("6mwt_bl_pl", info_det_tmz$Determinacion),]$Nombre,"Baseline ", "")
        det_unit <- info_det_tmz[grepl("6mwt_bl_pl", info_det_tmz$Determinacion),]$Unidad}
     det_unit <- as.character(det_unit)
+    if (det == "pcr" | det == "bnp") {
+        det_unit <- paste("log(", det_unit, ")", sep = "")}
     print(det_unit)       
-    Tabla_estadistica2 <- rbind(Tabla_estadistica2, as.data.frame(cbind(det_name,analisis[[1]],analisis[[2]],analisis[[3]],det_unit, analisis[[4]], round(analisis[[5]],3))))    
+    Tabla_estadistica2 <- rbind(Tabla_estadistica2, as.data.frame(cbind(det_name,analisis[[1]],analisis[[2]],analisis[[3]],det_unit, analisis[[4]], analisis[[5]])))    
     } 
-names(Tabla_estadistica2) <- c("Determinacion","Baseline","Placebo 3 Months", "TMZ 3 Months","Unit", "Test", "p-Value") 
+names(Tabla_estadistica2) <- c("Characteristic","Baseline","Placebo", "Trimetazidine","Unit", "Test", "p-Value") 
 Tabla_estadistica2
+#Tabla_estadistica3 <- 
 Tabla_estadistica2 %>%
-  kbl(caption = "Statistical Analysis of the Trimetazidine Cohort") %>%
-  kable_classic(full_width = F, html_font = "Cambria")
+  kbl(caption = "Baseline characteristics and results after 3 months of placebo and after 3 months of Trimetazidine") %>%
+  kable_classic(full_width = F, html_font = "Cambria")%>%
+  #footnote(general = "* Values ​​of Trimetazidine ​​and Placebo correspond to their differences with the baseline values.", general_title = "")%>%
+  save_kable(file = "table_1.png")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ############################################################
 # ML preparacion
@@ -144,7 +185,8 @@ names(tmz_cohort_data2)[grepl("_bl", names(tmz_cohort_data2)) & !grepl("_bl_pl",
 tmz_cohort_data2 <- tmz_cohort_data2[names(tmz_cohort_data2) != "psap_bl" & names(tmz_cohort_data2) != "papm_bl"] # descartar ya que se encuentra ademas una columna con la misma medicion basal en forma _bl_pl
 
 diferencia_6mwt_TMZ_treat <- tmz_cohort_data$X6mwt_3_tmz - tmz_cohort_data$X6mwt_bl_pl
-tmz_cohort_data2$TMZ_6mwt_treat_eff <- tmz_cohort_data$X6mwt_3_tmz - tmz_cohort_data2$X6mwt_bl_pl
+#tmz_cohort_data2$TMZ_6mwt_treat_eff <- tmz_cohort_data$X6mwt_3_tmz - tmz_cohort_data2$X6mwt_bl_pl
+tmz_cohort_data2$TMZ_6mwt_treat_eff <- tmz_cohort_data$X6mwt_3_tmz
 write.table(tmz_cohort_data2, sep = "\t", file = "ML_TZM.tab", row.names = F, quote = F, col.names = T)
 
 

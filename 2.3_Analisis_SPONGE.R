@@ -128,7 +128,7 @@ dev.off()
 bitmap <- pdf_render_page("df_plot1.pdf", page = 1, dpi = 500)
 png::writePNG(bitmap, "norm_mir_boxplot.png")
 
-gencode <- read.delim("gencodeV35_fixed.txt")
+gencode <- read.delim("../gencode_genes.v38.annotation.tab")
 ids <- as.data.frame(unique(append(ceRNA_interactions_fdr$geneA,ceRNA_interactions_fdr$geneB)))
 colnames(ids) <- "gene_id"
 gencode <- merge(gencode, ids, by = "gene_id")
@@ -205,10 +205,7 @@ for (subtype in subtipos){
         for (interactor in names(genes_miRNA_candidates)){
                 if (length(genes_miRNA_candidates[[interactor]][,1]) != 0){
                         for(i in 1:length(genes_miRNA_candidates[[interactor]][,1])){
-                                genes_miRNA_candidates2 <- rbind(genes_miRNA_candidates2,as.data.frame(cbind(interactor, genes_miRNA_candidates[[interactor]][i,])))
-                        }               
-                }
-        }
+                                genes_miRNA_candidates2 <- rbind(genes_miRNA_candidates2,as.data.frame(cbind(interactor, genes_miRNA_candidates[[interactor]][i,])))}}}
 
         genes_miRNA_candidates3 <- genes_miRNA_candidates2[genes_miRNA_candidates2$interactor %in% DE_lncRNA_ceRNA_interactions$GeneA,]
         genes_miRNA_candidates4 <- genes_miRNA_candidates2[genes_miRNA_candidates2$interactor %in% DE_lncRNA_ceRNA_interactions$GeneB,]

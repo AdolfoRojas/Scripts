@@ -34,4 +34,4 @@ q <- ggplot(df2, aes(Class, Modules)) +
 
 ggarrange(p, q, labels = c("A", "B"), ncol = 2, nrow = 1)
 ggsave("Figura_GSEA_co-expresion.png", width = 16, height = 9, dpi = 600, units = "in")
-system("scp Figura_GSEA_co-expresion.png adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/Figura_GSEA_co-expresion.png")
+system("scp Figura_GSEA_co-expresion.png adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/Resultados_Tesis/Objetivo_2/Figura_GSEA_co-expresion.png")

@@ -1,4 +1,8 @@
 #!/usr/bin/env Rscript
+
+genesymbol_to_geneid <- read.delim("gencode_genes.v38.annotation.tab")
+genesymbol_to_geneid <- genesymbol_to_geneid[c("gene_name","gene_id")]
+
 ## PPI
 protein_int <- read.delim("GTEx_TFs_PPI/2_interacciones_sobre_700_gene_symbol_in_GTEx.tab")
 names(protein_int) <- c("element1","element2")
@@ -9,12 +13,53 @@ protein_int$int_type <- "PPI"
 tfs_int <- read.delim("GTEx_TFs_PPI/5_Interacciones_TF-Target_tejido_mamario.tsv")
 tfs_int <- tfs_int[c("tf","target")]
 names(tfs_int) <- c("element1","element2")
-tfs_int <- tfs_int[!duplicated(tfs_int),]
+tfs_int <- tfs_int[!duplicated(tfs_int),] # 21666     2
+alias <- tfs_int[!(tfs_int$element2 %in% genesymbol_to_geneid$gene_name),]
+tfs_int <- merge(tfs_int, genesymbol_to_geneid, by.x = "element1", by.y = "gene_name")
+tfs_int <- tfs_int[!duplicated(tfs_int),] #
+head(tfs_int)
+tfs_int$element1 <- NULL 
+head(tfs_int)
+names(tfs_int)[names(tfs_int) == "gene_id"] <- "element1"
+tfs_int <- merge(tfs_int, genesymbol_to_geneid, by.x = "element2", by.y = "gene_name")
+tfs_int <- tfs_int[!duplicated(tfs_int),] #
+head(tfs_int)
+tfs_int$element2 <- NULL
+head(tfs_int) 
+names(tfs_int)[names(tfs_int) == "gene_id"] <- "element2"
+tfs_int <- tfs_int[!duplicated(tfs_int),] #
+head(tfs_int) 
 
-#tfs_int2 <- tfs_int
-#names(tfs_int2) <- c("element2","element1")
-#tfs_int <- rbind(tfs_int,tfs_int2)
-#headtfs_int <- tfs_int[!duplicated(tfs_int),]
+library(httr)
+library(jsonlite)
+library(xml2)
+
+alias$gene_id <- "desconocido"
+alias$n_id_encontrados <- 0
+server <- "https://rest.ensembl.org"
+
+for (identifier in unique(alias$element2)) {
+   
+   ext <- paste("/xrefs/symbol/homo_sapiens/", identifier, "?", sep = "")
+   r <- GET(paste(server, ext, sep = ""), content_type("application/json"))
+   stop_for_status(r)    
+   alias[alias$element2== identifier,]$n_id_encontrados <- length(fromJSON(toJSON(content(r)))$id)
+   print(alias[alias$element2== identifier,]$n_id_encontrados)
+   # use this if you get a simple nested list back, otherwise inspect its structure
+   # head(data.frame(t(sapply(content(r),c))))
+   ens_gene_id <- as.character(fromJSON(toJSON(content(r)))$id[[1]])
+   if (length(ens_gene_id) > 0) {             
+      alias[alias$element2== identifier,]$gene_id <- ens_gene_id}}
+
+length(unique(alias[alias$n_id_encontrados== 0,]$element2))
+alias <- alias[alias$n_id_encontrados!= 0,]
+length(unique(alias[alias$n_id_encontrados == 2,]$element2))
+length(unique(alias[alias$n_id_encontrados > 2,]$element2))
+alias$element2 <- NULL
+names(alias)[names(alias) == "gene_id"] <- "element2"
+alias$n_id_encontrados <- NULL
+tfs_int <- rbind(tfs_int,alias)
+tfs_int <- tfs_int[!duplicated(tfs_int),]
 tfs_int$int_type <- "TF-Target"
 
 ## Co-Expression
@@ -38,15 +83,6 @@ ceRNA_int2 <- ceRNA_int
 names(ceRNA_int2) <- c("element1","element2")
 ceRNA_int <- rbind(ceRNA_int2,ceRNA_int)
 ceRNA_int$int_type <- "ceRNA"
-library(EnsDb.Hsapiens.v86)
-ensembl.genes <- ceRNA_int$element1
-geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v86, keys= ensembl.genes, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
-ceRNA_int <- merge(ceRNA_int, geneIDs1, by.x = "element1", by.y = "GENEID")
-ceRNA_int$element1 <- NULL 
-names(ceRNA_int)[names(ceRNA_int) == "SYMBOL"] <- "element1"
-ceRNA_int <- merge(ceRNA_int, geneIDs1, by.x = "element2", by.y = "GENEID")
-ceRNA_int$element2 <- NULL 
-names(ceRNA_int)[names(ceRNA_int) == "SYMBOL"] <- "element2"
 ceRNA_int <- ceRNA_int[!duplicated(ceRNA_int),]
 
 genes_miRNA_candidates2 <- NULL
@@ -57,32 +93,9 @@ for (interactor in names(genes_miRNA_candidates)){
          genes_miRNA_candidates2 <- rbind(genes_miRNA_candidates2,as.data.frame(cbind(interactor, genes_miRNA_candidates[[interactor]][i,])))}}}
 genes_miRNA_candidates2$coefficient <- NULL
 names(genes_miRNA_candidates2) <- c("element2","element1")
-
-ensembl.genes <- genes_miRNA_candidates2$element2
-geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v86, keys= ensembl.genes, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
-genes_miRNA_candidates2 <- merge(genes_miRNA_candidates2, geneIDs1, by.x = "element2", by.y = "GENEID")
-genes_miRNA_candidates2$element2 <- NULL 
-names(genes_miRNA_candidates2)[names(genes_miRNA_candidates2) == "SYMBOL"] <- "element2"
-
-#genes_miRNA_candidates3 <- genes_miRNA_candidates2
-#names(genes_miRNA_candidates3) <- c("element1","element2")
-#genes_miRNA_candidates2 <- rbind(genes_miRNA_candidates2,genes_miRNA_candidates3)
 genes_miRNA_candidates2 <- genes_miRNA_candidates2[!duplicated(genes_miRNA_candidates2),]
 genes_miRNA_candidates2$int_type <- "miRNA-mRNA"
-
 genes_miRNA_candidates2 <- genes_miRNA_candidates2[!duplicated(genes_miRNA_candidates2),]
 
 final_int <- rbind(ceRNA_int, tfs_int, protein_int, genes_miRNA_candidates2)
 write.table(final_int, sep = "\t", file = "final_interaction.tab", row.names = F, quote = F, col.names = T)
-
-
-library(EnsDb.Hsapiens.v86)
-afected_genes_snp <- read.delim("VEP_p-Value_threshold_1_hapmap3_all_variant_effect", sep = '\t', header = F)
-afected_genes_snp <- afected_genes_snp[c("V1","V4","V5","V6","V7")]
-
-ensembl.genes <- afected_genes_snp$V4
-geneIDs1 <- ensembldb::select(EnsDb.Hsapiens.v86, keys= ensembl.genes, keytype = "GENEID", columns = c("SYMBOL","GENEID"))
-afected_genes_snp <- merge(afected_genes_snp, geneIDs1, by.x = "V4", by.y = "GENEID")
-
-afected_genes_snp <- afected_genes_snp[!duplicated(afected_genes_snp),]
-write.table(afected_genes_snp, sep = "\t", file = "Vep_ensembl_symbol_IDs.tab", row.names = F, quote = F, col.names = T)
