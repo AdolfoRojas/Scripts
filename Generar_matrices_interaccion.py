@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#from abc import ABCMeta
 import os
 import pandas as pd
 import sys
