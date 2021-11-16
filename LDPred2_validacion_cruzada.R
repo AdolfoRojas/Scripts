@@ -188,7 +188,7 @@ info_snp$final_beta_auto_mean_K <- rowMeans(K_betas[grepl("final_beta_auto_K",na
 pred_inf <- big_prodVec(G, info_snp$beta_inf_mean_K, ind.row = ind.final.val, ind.col = info_snp$`_NUM_ID_`, ncores = NCORES)
 AUC_inf <- AUCBoot(pred_inf, y[ind.final.val], seed = 1)
 
-pred_nosp <- big_prodVec(G, best_grid_nosp, ind.row = ind.final.val, ind.col = df_beta[["_NUM_ID_"]], ncores = NCORES)
+pred_nosp <- big_prodVec(G, info_snp$best_grid_nosp_mean_K, ind.row = ind.final.val, ind.col = df_beta[["_NUM_ID_"]], ncores = NCORES)
 AUC_pred_nosp <- AUCBoot(pred_nosp, y[ind.final.val], seed = 1)
 
 pred_sp <- big_prodVec(G, info_snp$best_grid_sp_mean_K, ind.row = ind.final.val, ind.col = df_beta[["_NUM_ID_"]], ncores = NCORES)
@@ -203,9 +203,34 @@ full_list <- rbind(full_list, data.frame("AUC estimado promedio betas",
                     paste(round(AUC_pred_sp[1],6)," (", round(AUC_pred_sp[4],4),")", sep = ""), 
                     paste(round(AUC_Auto[1],6)," (", round(AUC_Auto[4],4),")", sep = ""),
                     fix.empty.names = F))
-
 colnames(full_list) <- c("K","Infinitesimal", "Grid-NOSP", "Grid-SP", "Automatico")
-write.table(full_list, sep = "\t", file ="Rendimientos_validacion_cruzada.tsv", row.names = F, quote = F, col.names = T)
+
+full_list2 <- full_list[1:(nrow(full_list)-1),]
+full_list2$Infinitesimal <- sapply(strsplit(full_list2$Infinitesimal," \\("), `[`, 1)
+full_list2$'Grid-NOSP' <- sapply(strsplit(full_list2$'Grid-NOSP'," \\("), `[`, 1)
+full_list2$'Grid-SP' <- sapply(strsplit(full_list2$'Grid-SP'," \\("), `[`, 1)
+full_list2$Automatico <- sapply(strsplit(full_list2$Automatico," \\("), `[`, 1)
+full_list2$Infinitesimal <- as.numeric(full_list2$Infinitesimal)
+full_list2$'Grid-NOSP' <- as.numeric(full_list2$'Grid-NOSP')
+full_list2$'Grid-SP' <- as.numeric(full_list2$'Grid-SP')
+full_list2$Automatico <- as.numeric(full_list2$Automatico)
+crossval_rendimiento <- colMeans(full_list2[,2:5])
+crossval_rendimiento <- data.frame("AUC rendimiento promedio",crossval_rendimiento[[1]],crossval_rendimiento[[2]],crossval_rendimiento[[3]],crossval_rendimiento[[4]],fix.empty.names = F)
+colnames(crossval_rendimiento) <- c("K","Infinitesimal", "Grid-NOSP", "Grid-SP", "Automatico")
+
+full_list2 <- rbind(full_list2, crossval_rendimiento)
+rendimiento_258 <- data.frame("AUC estimado promedio betas",
+                    paste(round(AUC_inf[1],6)," (", round(AUC_inf[4],4),")", sep = ""),
+                    paste(round(AUC_pred_nosp[1],6)," (", round(AUC_pred_nosp[4],4),")", sep = ""),
+                    paste(round(AUC_pred_sp[1],6)," (", round(AUC_pred_sp[4],4),")", sep = ""), 
+                    paste(round(AUC_Auto[1],6)," (", round(AUC_Auto[4],4),")", sep = ""),
+                    fix.empty.names = F)
+colnames(rendimiento_258) <- c("K","Infinitesimal", "Grid-NOSP", "Grid-SP", "Automatico")
+full_list2 <- rbind(full_list2, rendimiento_258)
+variantes_geneticas <- info_snp$rsid
+write.table(variantes_geneticas, sep = "\t", file ="ids_rs.txt", row.names = F, quote = F, col.names = F)
+
+write.table(full_list2, sep = "\t", file ="Rendimientos_validacion_cruzada.tsv", row.names = F, quote = F, col.names = T)
 bot$sendDocument(chat_id, document = "Rendimientos_validacion_cruzada.tsv")
 save.image(file = "2_entorno_validacion_cruzada.RData")
 ###################################################################################################################################
