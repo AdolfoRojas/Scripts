@@ -5,24 +5,24 @@ library(ggplot2)
 library(mdp)
 library(BiocParallel)
 library(telegram.bot)
+library(dplyr)
+library(SummarizedExperiment)
 bot = Bot(token = bot_token("AARH_95_bot"))
 chat_id <- bot_token("chat_id")
-register(MulticoreParam(15))
-Taruca_adolfo_tesis <- "adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/Resultados_Tesis/"
+register(MulticoreParam(50))
+Taruca_adolfo_tesis <- "adolfo@200.89.65.156:/media/run-projects/Adolfo/Resultados_Tesis/"
 system("mkdir -p Resultados_expresion_diferencial_mRNAs-gene_level")
 system("mkdir -p Resultados_expresion_diferencial_miRNAs-gene_level")
 system("mkdir -p Corregido_resultados_expresion_diferencial_miRNAs-gene_level")
 system("mkdir -p Corregido_resultados_expresion_diferencial_mRNAs-gene_level")
 #my.mode <- 2
-for (my.mode in 1:2) {
+for (my.mode in 1:2){
 print(my.mode)
 #######################################################################################################################################
 # Contiene el script tesis/3_co-expresion_analysis/1_Get_mRNAs_gene-level_FPKM_TCGA_matrix.R
 #######################################################################################################################################
-if (my.mode == 1) {
-        require(TCGAbiolinks)
-        library(SummarizedExperiment)
-        library(dplyr)
+if (my.mode == 6) {
+        require(TCGAbiolinks)        
         CancerProject <- "TCGA-BRCA"
         DataDirectory <- paste0("GDC/",gsub("-","_",CancerProject))
         FileNameData <- paste0(DataDirectory, "_","mRNA_gene_quantification",".rda")
@@ -62,15 +62,17 @@ if (my.mode == 1){
         sample_annot <- sample_annot[sample_annot$BRCA_Subtype_PAM50 != "Normal",]
         sample_annot <- sample_annot[sample_annot$BRCA_Subtype_PAM50 != "NA",]
         sample_annot$AliquotBarcode <- substring(sample_annot$AliquotBarcode, 1, 15)
+        sample_annot <- sample_annot[duplicated(sample_annot$patient) | duplicated(sample_annot$patient,fromLast=T),]
         colnames(sample_annot)[colnames(sample_annot)=="AliquotBarcode"] <- "SampleName"}
 if (my.mode == 2){
         sample_annot <- read.delim("2_sample_annot.tab", sep = "\t") #añadir muestras outliers        
-        sample_annot <- sample_annot[duplicated(sample_annot$patient) | duplicated(sample_annot$patient,fromLast=T),]
+        #sample_annot <- sample_annot[duplicated(sample_annot$patient) | duplicated(sample_annot$patient,fromLast=T),]
         cluster_info <- read.delim("cluster_output_miRNAs.tab", sep = "\t", header=FALSE)
-        cluster_info2 <- read.delim("cluster_output_mRNAs.tab", sep = "\t", header=FALSE)
+        #cluster_info2 <- read.delim("cluster_output_mRNAs.tab", sep = "\t", header=FALSE)
         sample_annot <- sample_annot[!(sample_annot$SampleName %in% cluster_info$V1),]
-        sample_annot <- sample_annot[!(sample_annot$SampleName %in% cluster_info2$V1),]
-        sample_annot <- sample_annot[duplicated(sample_annot$patient) | duplicated(sample_annot$patient,fromLast=T),]}
+        #sample_annot <- sample_annot[!(sample_annot$SampleName %in% cluster_info2$V1),]
+        sample_annot <- sample_annot[duplicated(sample_annot$patient) | duplicated(sample_annot$patient,fromLast=T),]
+        }
 colnames(expr0) <- gsub("\\.", "-", colnames(expr0))
 colnames(expr0) <- substring(colnames(expr0), 1, 15)
 #######################################################################################################################################
@@ -137,12 +139,13 @@ for (RNAs in c("mRNAs", "miRNAs")) {
         }
         colnames(expr0) <- gsub("\\.", "-", colnames(expr0))
         colnames(expr0) <- substring(colnames(expr0), 1, 15)        
-        matrix <- as.data.frame(expr0)
+        matrix <- as.data.frame(expr0)       
+        coldata <- sample_data
+        cts <- matrix[coldata$column]        
+
         colnames(expr1) <- gsub("\\.", "-", colnames(expr1))
         colnames(expr1) <- substring(colnames(expr1), 1, 15)        
-        matrix2 <- as.data.frame(expr1)        
-        coldata <- sample_data
-        cts <- matrix[coldata$column] + 1
+        matrix2 <- as.data.frame(expr1) 
         mdp_samples <- coldata
         colnames(mdp_samples) <- c("Sample", "Class", "Subtype")
         mdp_samples <- as.data.frame(mdp_samples)
@@ -156,36 +159,17 @@ for (RNAs in c("mRNAs", "miRNAs")) {
         mdp(cts2, mdp_samples, control_lab = "Normal", file_name = "all_samples_", measure = "mean", directory = Result_directory) 
 
         dds <- DESeqDataSetFromMatrix(countData = cts, colData = coldata, design = ~ Condition)
-        keep <- rowSums(counts(dds)) > length(cts) ## Pre-Filtering
+        keep <- rowSums(counts(dds)) > 1 ## Pre-Filtering
         dds <- dds[keep,]
         dds$Condition <- factor(dds$Condition, levels = c("Normal","Tumoral"))
         dds$Condition <- droplevels(dds$Condition)
-        dds <- DESeq(dds, fitType="local", parallel = TRUE)
+        dds <- DESeq(dds, fitType="local", parallel = TRUE)        
+        if (my.mode == 2){
+                DESeq_norm <- counts(dds, normalized=T)
+                write.table(DESeq_norm, file = paste0("Gene-level_",RNAs,"_DESeq_norm_matrix_WT.csv"), row.names = T, quote = F, col.names = T, sep = ",")}  
         vsd <- varianceStabilizingTransformation(dds, blind=FALSE)
         pcaData <- plotPCA(vsd, intgroup=c("Condition", "Subtype"), returnData=TRUE)
         percentVar <- round(100 * attr(pcaData, "percentVar"))
-        if (my.mode == 1){
-                normal_pca <- pcaData[pcaData$Condition == "Normal",]
-                eps_data <- ""
-                library(dbscan)
-                if (RNAs == "mRNAs"){
-                        eps_data <- 6}
-                if (RNAs == "miRNAs"){
-                        eps_data <- 15}
-                df <- normal_pca[c("PC1","PC2")]
-                pdf(paste("Grafico_", RNAs, ".pdf", sep = ""), height = 6.5, width = 10)
-                kNNdistplot(df, k = 3  )
-                abline(h = eps_data, lty = 2)
-                dev.off()
-                cl<-dbscan(df,eps= eps_data,MinPts = 3)
-                df2 <- cbind(df,cl$cluster)
-                names(df2)[3] <- "cluster"
-                df2 <- rownames(df2[df2$cluster != 1,])
-                pdf(paste("Grafico2_", RNAs, ".pdf", sep = ""), height = 6.5, width = 10)
-                hullplot(df,cl$cluster, main = paste("Convex cluster Hulls, eps = ", eps_data, sep = ""))
-                dev.off()
-                system(paste("scp ", paste("Grafic*_", RNAs, ".pdf", sep = ""), " ",Taruca_adolfo_tesis, sep = ""))
-                write.table(df2, file = paste("cluster_output_", RNAs, ".tab", sep = ""), row.names = F, quote = F, col.names = F, sep = "\t")}
         p <- ggplot(pcaData, aes(PC1, PC2, color=Condition, shape=Subtype)) +
           ggtitle(paste("All samples for ", RNAs, "\n diferential expression analysis-gene level", sep = "")) +
           theme(plot.title = element_text(hjust = 0.5, size=14, face="bold.italic"), axis.title.x =element_text(size=12), axis.title.y = element_text(size=12), legend.title = element_text(face = "bold")) +
@@ -208,7 +192,7 @@ for (RNAs in c("mRNAs", "miRNAs")) {
                 TCGA_files <- c("LumA", "LumB", "Her2", "Basal")
                 for (File in TCGA_files){
                     coldata <- sample_data[sample_data$Subtype == File | sample_data$Condition == "Normal",]
-                    cts <- matrix[coldata$column] + 1
+                    cts <- matrix[coldata$column]
                     mdp_samples <- coldata
                     colnames(mdp_samples) <- c("Sample", "Class", "Subtype")
                     mdp_samples <- as.data.frame(mdp_samples)
@@ -218,7 +202,7 @@ for (RNAs in c("mRNAs", "miRNAs")) {
 
                     mdp(cts2, mdp_samples, control_lab = "Normal", file_name = paste(File, "_all_controls_", sep = ""), measure = "mean", directory = Result_directory)
                     dds <- DESeqDataSetFromMatrix(countData = cts, colData = coldata, design = ~ Condition)
-                    keep <- rowSums(counts(dds)) > length(cts) ## Pre-Filtering
+                    keep <- rowSums(counts(dds)) > 1 ## Pre-Filtering
                     dds <- dds[keep,]
                     dds$Condition <- factor(dds$Condition, levels = c("Normal","Tumoral"))
                     dds$Condition <- droplevels(dds$Condition)
@@ -244,14 +228,14 @@ for (RNAs in c("mRNAs", "miRNAs")) {
                    png::writePNG(bitmap, paste(Result_directory, File, "_samples_all_controls_", RNAs, "_MA_plot.png", sep = "")) #####################
                     unlink(paste("all_samples_", RNAs, "_MA_plotx.pdf", sep = ""))
                     write.csv( res, file=paste(Result_directory, File, "_samples_all_controls_", RNAs,"_", levels(dds$Condition)[1], "_vs_", levels(dds$Condition)[2],"_DE.tab", sep= ""))}}
-        if (my.mode == 1){
+        if (my.mode == 6){
                 system(paste("tar -czvf", paste("resultados_", RNAs, "-gene_level.tar.gz", sep =""), Result_directory, sep = " "))}
         if (my.mode == 2){
                 system(paste("tar -czvf", paste("corregido_resultados_", RNAs, "-gene_level.tar.gz", sep =""), Result_directory, sep = " "))}}
-if (my.mode == 1){
-        system(paste("scp ", "resultados*.tar.gz ",Taruca_adolfo_tesis, "Pareados/", sep = ""))}
+if (my.mode == 6){
+        system(paste("scp -P 1313 ", "resultados*.tar.gz ",Taruca_adolfo_tesis, "Pareados/", sep = ""))}
 if (my.mode == 2){
-        system(paste("scp ", "corregido*.tar.gz ",Taruca_adolfo_tesis, "Pareados/", sep = ""))}
+        system(paste("scp -P 1313 ", "corregido*.tar.gz ",Taruca_adolfo_tesis, "Pareados/", sep = ""))}
 }
 message_to_bot <- 'Script Finalizado:\n"Analisis de muestras y expresion diferencial"'
 bot$sendMessage(chat_id, text = message_to_bot)

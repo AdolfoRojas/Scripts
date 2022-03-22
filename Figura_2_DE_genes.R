@@ -184,7 +184,7 @@ venn.diagram(
   fontface = "bold",
   fontfamily = "sans")
    
-system("scp Venn_DE_*.png adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/")
+system("scp -P 1313 Venn_DE_*.png adolfo@200.89.65.156:/media/run-projects/Adolfo/Resultados_Tesis/Objetivo_2/DE/")
 
 
 
@@ -210,36 +210,36 @@ protein_coding <- ggplot(counts, aes(x = Subtype, y = Regulation)) +
   ggtitle("Protein coding")+
   geom_point(aes(color = Regulation, size = Freq), alpha = 0.5) +
   scale_color_manual(values = c("blue", "red")) +
-  scale_size(range = c(20, 35)) + # Adjust the range of points size
+  scale_size(range = c(15, 25)) + # Adjust the range of points size
   geom_text(label= counts$Freq, size=6, color = "white")+ 
   theme(legend.position = "none", panel.background = element_blank(), axis.line = element_line(colour = "black"), 
-        axis.text=element_text(size=16), plot.title = element_text(face = "bold", hjust = 0.5), axis.text.y = element_blank())
+        axis.text=element_text(size=10), plot.title = element_text(face = "bold", hjust = 0.5), axis.text.y = element_blank())
 
 lncRNA <- ggplot(counts2, aes(x = Subtype, y = Regulation)) + 
   ggtitle("lncRNAs")+
   geom_point(aes(color = Regulation, size = Freq), alpha = 0.5) +
   scale_color_manual(values = c("blue", "red")) +
-  scale_size(range = c(20, 35)) + # Adjust the range of points size
+  scale_size(range = c(15, 25)) + # Adjust the range of points size
   geom_text(label= counts2$Freq, size=6, color = "white")+ 
   theme(legend.position = "none", panel.background = element_blank(), axis.line = element_line(colour = "black"), 
-        axis.text=element_text(size=16), plot.title = element_text(face = "bold", hjust = 0.5), axis.text.y = element_blank())
+        axis.text=element_text(size=10), plot.title = element_text(face = "bold", hjust = 0.5), axis.text.y = element_blank())
 miRNA <- ggplot(counts3, aes(x = Subtype, y = Regulation)) + 
   ggtitle("miRNAs")+
   geom_point(aes(color = Regulation, size = Freq), alpha = 0.5) +
   scale_color_manual(values = c("blue", "red")) +
-  scale_size(range = c(20, 35)) + # Adjust the range of points size
+  scale_size(range = c(15, 25)) + # Adjust the range of points size
   geom_text(label= counts3$Freq, size=6, color = "white")+ 
   theme(legend.position = "none", panel.background = element_blank(), axis.line = element_line(colour = "black"), 
-        axis.text=element_text(size=16), plot.title = element_text(face = "bold", hjust = 0.5), axis.text.y = element_blank())
+        axis.text=element_text(size=10), plot.title = element_text(face = "bold", hjust = 0.5), axis.text.y = element_blank())
 Others <- ggplot(counts4, aes(x = Subtype, y = Regulation)) + 
   ggtitle("Others")+
   geom_point(aes(color = Regulation, size = Freq), alpha = 0.5) +
   scale_color_manual(values = c("blue", "red")) +
-  scale_size(range = c(20, 35)) + # Adjust the range of points size
+  scale_size(range = c(15, 25)) + # Adjust the range of points size
   geom_text(label= counts4$Freq, size=6, color = "white")+ 
   theme(legend.position = "none", panel.background = element_blank(), axis.line = element_line(colour = "black"), 
-        axis.text=element_text(size=16), plot.title = element_text(face = "bold", hjust = 0.5), axis.text.y = element_blank())
+        axis.text=element_text(size=10), plot.title = element_text(face = "bold", hjust = 0.5), axis.text.y = element_blank())
 require(gridExtra)
 plot_all <- grid.arrange(protein_coding, lncRNA, miRNA, Others, ncol=2, nrow = 2)
-ggsave(plot = plot_all,filename = "Figura_DE_genes.png", height = 9, width = 16, dpi = 600)
-system("scp Figura_DE_genes.png adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/Figura_DE_genes.png")
+ggsave(plot = plot_all,filename = "Figura_DE_genes.png", dpi = 600) #height = 9, width = 16,
+system("scp -P 1313 Figura_DE_genes.png adolfo@200.89.65.156:/media/run-projects/Adolfo/Resultados_Tesis/Objetivo_2/DE/")

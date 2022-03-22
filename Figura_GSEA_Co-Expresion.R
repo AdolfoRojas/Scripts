@@ -28,10 +28,10 @@ p <- ggplot(df, aes(Class, Modules)) +
 
 q <- ggplot(df2, aes(Class, Modules)) +  
   geom_point(aes(size = abs(NES), colour=NES)) +
-  scale_colour_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
-  theme_minimal()+ theme(plot.title = element_text(face = "bold.italic", hjust= -0.1, size = 24)) + 
+  scale_colour_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) + theme_minimal()+ 
+  theme(axis.text.y=element_blank(),plot.title = element_text(face = "bold.italic", hjust= -0.1, size = 24)) + 
   labs(size = "NES") + theme(legend.position = "none")
 
 ggarrange(p, q, labels = c("A", "B"), ncol = 2, nrow = 1)
-ggsave("Figura_GSEA_co-expresion.png", width = 16, height = 9, dpi = 600, units = "in")
-system("scp Figura_GSEA_co-expresion.png adolfo@200.89.65.156:/run/media/vinicius/run-projects/Adolfo/Resultados_Tesis/Objetivo_2/Figura_GSEA_co-expresion.png")
+ggsave("Figura_GSEA_co-expresion.png", dpi = 600, units = "in")
+system("scp -P 1313 Figura_GSEA_co-expresion.png adolfo@200.89.65.156:/media/run-projects/Adolfo/Resultados_Tesis/Objetivo_2/Figura_GSEA_co-expresion.png")

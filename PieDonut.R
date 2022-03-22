@@ -449,7 +449,6 @@ require(moonBook)
 library(pdftools)
 library(ggforce)
 library(grid)
-setwd("../Tesis")
 file2 <- "2_sample_annot_corregido.tab"
 
 df_plot1 <- read.table(file2, header=T, sep = "\t")

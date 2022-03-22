@@ -7,60 +7,81 @@ genesymbol_to_geneid <- genesymbol_to_geneid[c("gene_name","gene_id")]
 protein_int <- read.delim("GTEx_TFs_PPI/2_interacciones_sobre_700_gene_symbol_in_GTEx.tab")
 names(protein_int) <- c("element1","element2")
 protein_int <- protein_int[!duplicated(protein_int),]
+
+protein_int2 <- protein_int
+names(protein_int2) <- c("element2","element1")
+protein_int <- rbind(protein_int,protein_int2)
 protein_int$int_type <- "PPI"
+protein_int <- protein_int[!duplicated(protein_int),]
 
 ## TFs
 tfs_int <- read.delim("GTEx_TFs_PPI/5_Interacciones_TF-Target_tejido_mamario.tsv")
 tfs_int <- tfs_int[c("tf","target")]
 names(tfs_int) <- c("element1","element2")
 tfs_int <- tfs_int[!duplicated(tfs_int),] # 21666     2
-alias <- tfs_int[!(tfs_int$element2 %in% genesymbol_to_geneid$gene_name),]
-tfs_int <- merge(tfs_int, genesymbol_to_geneid, by.x = "element1", by.y = "gene_name")
-tfs_int <- tfs_int[!duplicated(tfs_int),] #
-head(tfs_int)
-tfs_int$element1 <- NULL 
-head(tfs_int)
-names(tfs_int)[names(tfs_int) == "gene_id"] <- "element1"
-tfs_int <- merge(tfs_int, genesymbol_to_geneid, by.x = "element2", by.y = "gene_name")
-tfs_int <- tfs_int[!duplicated(tfs_int),] #
-head(tfs_int)
-tfs_int$element2 <- NULL
-head(tfs_int) 
-names(tfs_int)[names(tfs_int) == "gene_id"] <- "element2"
-tfs_int <- tfs_int[!duplicated(tfs_int),] #
-head(tfs_int) 
-
-library(httr)
-library(jsonlite)
-library(xml2)
-
-alias$gene_id <- "desconocido"
-alias$n_id_encontrados <- 0
-server <- "https://rest.ensembl.org"
-
-for (identifier in unique(alias$element2)) {
-   
-   ext <- paste("/xrefs/symbol/homo_sapiens/", identifier, "?", sep = "")
-   r <- GET(paste(server, ext, sep = ""), content_type("application/json"))
-   stop_for_status(r)    
-   alias[alias$element2== identifier,]$n_id_encontrados <- length(fromJSON(toJSON(content(r)))$id)
-   print(alias[alias$element2== identifier,]$n_id_encontrados)
-   # use this if you get a simple nested list back, otherwise inspect its structure
-   # head(data.frame(t(sapply(content(r),c))))
-   ens_gene_id <- as.character(fromJSON(toJSON(content(r)))$id[[1]])
-   if (length(ens_gene_id) > 0) {             
-      alias[alias$element2== identifier,]$gene_id <- ens_gene_id}}
-
-length(unique(alias[alias$n_id_encontrados== 0,]$element2))
-alias <- alias[alias$n_id_encontrados!= 0,]
-length(unique(alias[alias$n_id_encontrados == 2,]$element2))
-length(unique(alias[alias$n_id_encontrados > 2,]$element2))
-alias$element2 <- NULL
-names(alias)[names(alias) == "gene_id"] <- "element2"
-alias$n_id_encontrados <- NULL
-tfs_int <- rbind(tfs_int,alias)
 tfs_int <- tfs_int[!duplicated(tfs_int),]
 tfs_int$int_type <- "TF-Target"
+
+
+## NPInter
+
+NPInter_int <- read.delim("lncRNAfunc_data/lncRNAfunc_data.tab", sep = "\t",header=F)
+names(NPInter_int)[1:2] <- c("element1","element2")
+NPInter_int$V3 <- NULL
+NPInter_int$V4 <- NULL
+NPInter_int <- NPInter_int[!duplicated(NPInter_int),] 
+
+NPInter_int2 <- NPInter_int
+names(NPInter_int2) <- c("element2","element1")
+NPInter_int <- rbind(NPInter_int,NPInter_int2)
+NPInter_int$int_type <- "lncRNAfunc"
+NPInter_int <- NPInter_int[!duplicated(NPInter_int),]
+
+
+#NPInter_int <- merge(NPInter_int, genesymbol_to_geneid, by.x = "element1", by.y = "gene_name")
+#tfs_int <- tfs_int[!duplicated(tfs_int),] #
+#head(tfs_int)
+#tfs_int$element1 <- NULL 
+#head(tfs_int)
+#names(tfs_int)[names(tfs_int) == "gene_id"] <- "element1"
+#tfs_int <- merge(tfs_int, genesymbol_to_geneid, by.x = "element2", by.y = "gene_name")
+#tfs_int <- tfs_int[!duplicated(tfs_int),] #
+#head(tfs_int)
+#tfs_int$element2 <- NULL
+#head(tfs_int) 
+#names(tfs_int)[names(tfs_int) == "gene_id"] <- "element2"
+#tfs_int <- tfs_int[!duplicated(tfs_int),] #
+#head(tfs_int) 
+
+#library(httr)
+#library(jsonlite)
+#library(xml2)
+
+#alias$gene_id <- "desconocido"
+#alias$n_id_encontrados <- 0
+#server <- "https://rest.ensembl.org"
+
+#for (identifier in unique(alias$element1)) {
+#   print(identifier)   
+#   ext <- paste("/xrefs/symbol/homo_sapiens/", identifier, "?", sep = "")
+#   r <- GET(paste(server, ext, sep = ""), content_type("application/json"))
+#   stop_for_status(r)    
+#   alias[alias$element1== identifier,]$n_id_encontrados <- length(fromJSON(toJSON(content(r)))$id)
+ #  print(alias[alias$element1== identifier,]$n_id_encontrados)
+   # use this if you get a simple nested list back, otherwise inspect its structure
+   # head(data.frame(t(sapply(content(r),c))))
+ #  ens_gene_id <- as.character(fromJSON(toJSON(content(r)))$id[[1]])
+#   if (length(ens_gene_id) > 0) {             
+#      alias[alias$element1== identifier,]$gene_id <- ens_gene_id}}
+
+#length(unique(alias[alias$n_id_encontrados== 0,]$element2))
+#alias <- alias[alias$n_id_encontrados!= 0,]
+#length(unique(alias[alias$n_id_encontrados == 2,]$element2))
+#length(unique(alias[alias$n_id_encontrados > 2,]$element2))
+#alias$element2 <- NULL
+#names(alias)[names(alias) == "gene_id"] <- "element2"
+#alias$n_id_encontrados <- NULL
+#tfs_int <- rbind(tfs_int,alias)
 
 ## Co-Expression
 #coex_modules <- read.delim("co-expression/subtipos_vs_normal/Tables/module.tsv")
@@ -97,5 +118,5 @@ genes_miRNA_candidates2 <- genes_miRNA_candidates2[!duplicated(genes_miRNA_candi
 genes_miRNA_candidates2$int_type <- "miRNA-mRNA"
 genes_miRNA_candidates2 <- genes_miRNA_candidates2[!duplicated(genes_miRNA_candidates2),]
 
-final_int <- rbind(ceRNA_int, tfs_int, protein_int, genes_miRNA_candidates2)
+final_int <- rbind(NPInter_int,ceRNA_int, tfs_int, protein_int, genes_miRNA_candidates2)
 write.table(final_int, sep = "\t", file = "final_interaction.tab", row.names = F, quote = F, col.names = T)

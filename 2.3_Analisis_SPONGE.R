@@ -3,7 +3,9 @@ library(edgeR)
 library(tidyverse)
 library(pdftools)
 library(SPONGE)
-N_CORES <- 60
+library(BiocParallel)
+library(DESeq2)
+N_CORES <- 50
 
 interaction_matrix <- read.delim("matrix_anotada_full.txt", h =  T)
 RNA_exp <- read.delim("../analisis_muestras_y_DE/1_mRNAs_gene-level_Counts_TCGA_matrix.tab", h = T, row.names = 1, stringsAsFactors = F)
@@ -53,8 +55,8 @@ cpm_miR <- cpm(raw_miR$counts)
 lcpm_miR <- cpm(raw_miR, log=TRUE)
 mean(raw_miR$samples$lib.size) * 1e-6
 median(raw_miR$samples$lib.size) * 1e-6
-table(rowSums(cpm(raw_miR)>=4) >=50)
-keep <- rowSums(cpm(raw_miR)>=4) >= 50  ### equivale a 10
+table(rowSums(cpm(raw_miR)>=1) >=ncol(raw_miR)*0.05)
+keep <- rowSums(cpm(raw_miR)>=1) >= ncol(raw_miR)*0.05  ### equivale a 10
 filtered_mir <- raw_miR[keep, keep.lib.sizes=FALSE]
 dim(filtered_mir)
 norm_mir <- calcNormFactors(filtered_mir, method = "TMM")
@@ -64,8 +66,8 @@ cpm_RNA <- cpm(raw_RNA$counts)
 lcpm_RNA <- cpm(raw_RNA, log=TRUE)
 mean(raw_RNA$samples$lib.size) * 1e-6
 median(raw_RNA$samples$lib.size) * 1e-6
-table(rowSums(cpm(raw_RNA)>=0.263) >=50)  ### para mRNA 15 
-keep <- rowSums(cpm(raw_RNA)>=0.263) >= 50
+table(rowSums(cpm(raw_RNA)>=0.035) >=ncol(raw_RNA)*0.05)  ### para mRNA 15 
+keep <- rowSums(cpm(raw_RNA)>=0.035) >= ncol(raw_RNA)*0.05
 filtered_RNA <- raw_RNA[keep, keep.lib.sizes=FALSE]
 dim(filtered_RNA)
 norm_RNA <- calcNormFactors(filtered_RNA, method = "TMM")
@@ -106,7 +108,7 @@ png::writePNG(bitmap, "df_plot1.png")
 
 ceRNA_interactions_sign <- sponge_compute_p_values(sponge_result = ceRNA_interactions, null_model = mscor_null_model)
 stopCluster(cl) 
-ceRNA_interactions_fdr <- ceRNA_interactions_sign[which(ceRNA_interactions_sign$p.adj < 0.01),]
+ceRNA_interactions_fdr <- ceRNA_interactions_sign[which(ceRNA_interactions_sign$p.adj < 0.05),]
 
 save.image(file = "1_entorno_completo_sponge2.RData")
 
@@ -237,3 +239,7 @@ for (subtype in subtipos){
         mirRNAs_unicos <- unlist(mirRNAs_unicos, use.names = F)
         mirRNAs_unicos <- unique(mirRNAs_unicos)
         length(mirRNAs_unicos)}
+
+#cat 4_DE_*_ceRNA_interactions.tab|cut -d$'\t' -f 2,3 | grep -v "gene_nameA"|sort|uniq > gene_typeA
+#cat 4_DE_*_ceRNA_interactions.tab|cut -d$'\t' -f 5,6 | grep -v "gene_nameB"|sort|uniq > gene_typeB
+#cat gene_type* | sort | uniq > gene_types.tab
