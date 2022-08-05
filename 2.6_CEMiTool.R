@@ -43,7 +43,7 @@ sample_annot$Class[sample_annot$Class == "TP"] <- "Tumoral"
 sample_annot <- sample_annot[c("SampleName","Class")]
 
 if (identical(colnames(expr0), sample_annot$SampleName) == T){
-        cem <- cemitool(expr0, sample_annot, interactions=PP_int_df, gmt_info, filter= T, plot = TRUE, verbose=T, apply_vst = T) # 
+        cem <- cemitool(expr0, sample_annot, interactions=PP_int_df, gmt_info, filter= T, plot = TRUE, verbose=T, apply_vst = T, gsea_max_size=3000) # 
         
         write_files(cem, directory="normal_vs_tumoral/Tables", force = T) # write analysis results into files
         save_plots(cem, "all", directory="normal_vs_tumoral/Plots", force = T)# save all plots
@@ -59,7 +59,7 @@ sample_annot[sample_annot$sample_type == "NT",]$Class <- "Normal control"
 sample_annot <- sample_annot[c("SampleName","Class")]
 
 if (identical(colnames(expr0), sample_annot$SampleName) == T){
-        cem <- cemitool(expr0, sample_annot, interactions=PP_int_df, gmt_info, filter= T, plot=TRUE, verbose=T, apply_vst = T) #
+        cem <- cemitool(expr0, sample_annot, interactions=PP_int_df, gmt_info, filter= T, plot=TRUE, verbose=T, apply_vst = T, gsea_max_size=3000) #
         write_files(cem, directory="subtipos_vs_normal/Tables", force = T)# write analysis results into files
         save_plots(cem, "all", directory="subtipos_vs_normal/Plots", force = T)# save all plots
         print(cem)

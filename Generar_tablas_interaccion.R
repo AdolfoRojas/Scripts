@@ -22,10 +22,9 @@ tfs_int <- tfs_int[!duplicated(tfs_int),] # 21666     2
 tfs_int <- tfs_int[!duplicated(tfs_int),]
 tfs_int$int_type <- "TF-Target"
 
-
 ## NPInter
 
-NPInter_int <- read.delim("lncRNAfunc_data/lncRNAfunc_data.tab", sep = "\t",header=F)
+NPInter_int <- read.delim("lncRNAfunc_data/lncRNAfunc_data_expresado.tab", sep = "\t",header=F)
 names(NPInter_int)[1:2] <- c("element1","element2")
 NPInter_int$V3 <- NULL
 NPInter_int$V4 <- NULL
@@ -37,62 +36,6 @@ NPInter_int <- rbind(NPInter_int,NPInter_int2)
 NPInter_int$int_type <- "lncRNAfunc"
 NPInter_int <- NPInter_int[!duplicated(NPInter_int),]
 
-
-#NPInter_int <- merge(NPInter_int, genesymbol_to_geneid, by.x = "element1", by.y = "gene_name")
-#tfs_int <- tfs_int[!duplicated(tfs_int),] #
-#head(tfs_int)
-#tfs_int$element1 <- NULL 
-#head(tfs_int)
-#names(tfs_int)[names(tfs_int) == "gene_id"] <- "element1"
-#tfs_int <- merge(tfs_int, genesymbol_to_geneid, by.x = "element2", by.y = "gene_name")
-#tfs_int <- tfs_int[!duplicated(tfs_int),] #
-#head(tfs_int)
-#tfs_int$element2 <- NULL
-#head(tfs_int) 
-#names(tfs_int)[names(tfs_int) == "gene_id"] <- "element2"
-#tfs_int <- tfs_int[!duplicated(tfs_int),] #
-#head(tfs_int) 
-
-#library(httr)
-#library(jsonlite)
-#library(xml2)
-
-#alias$gene_id <- "desconocido"
-#alias$n_id_encontrados <- 0
-#server <- "https://rest.ensembl.org"
-
-#for (identifier in unique(alias$element1)) {
-#   print(identifier)   
-#   ext <- paste("/xrefs/symbol/homo_sapiens/", identifier, "?", sep = "")
-#   r <- GET(paste(server, ext, sep = ""), content_type("application/json"))
-#   stop_for_status(r)    
-#   alias[alias$element1== identifier,]$n_id_encontrados <- length(fromJSON(toJSON(content(r)))$id)
- #  print(alias[alias$element1== identifier,]$n_id_encontrados)
-   # use this if you get a simple nested list back, otherwise inspect its structure
-   # head(data.frame(t(sapply(content(r),c))))
- #  ens_gene_id <- as.character(fromJSON(toJSON(content(r)))$id[[1]])
-#   if (length(ens_gene_id) > 0) {             
-#      alias[alias$element1== identifier,]$gene_id <- ens_gene_id}}
-
-#length(unique(alias[alias$n_id_encontrados== 0,]$element2))
-#alias <- alias[alias$n_id_encontrados!= 0,]
-#length(unique(alias[alias$n_id_encontrados == 2,]$element2))
-#length(unique(alias[alias$n_id_encontrados > 2,]$element2))
-#alias$element2 <- NULL
-#names(alias)[names(alias) == "gene_id"] <- "element2"
-#alias$n_id_encontrados <- NULL
-#tfs_int <- rbind(tfs_int,alias)
-
-## Co-Expression
-#coex_modules <- read.delim("co-expression/subtipos_vs_normal/Tables/module.tsv")
-#coex_int <- data.frame()
-#for (module in levels(as.factor(coex_modules$modules))) {
-#   print(module)
-#   module_genes <- coex_modules[coex_modules$modules == module,]$genes
-#   for (gene in module_genes) {
-#      df_loop <- data.frame(element1 = rep(gene,length(module_genes)-1), element2 = module_genes[module_genes != gene], int_type = rep(module, length(module_genes)-1))
-#      coex_int <- rbind(coex_int,df_loop)}}
-#coex_int <- coex_int[!duplicated(coex_int),]
 
 ## ceRNA
 load("Sponge/1_entorno_completo_sponge2.RData")
