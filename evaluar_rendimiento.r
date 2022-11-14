@@ -52,6 +52,7 @@ evaluar_rendimientos_DE <- function(){
 
 comparar_roc_curves <- function(){
     library(pROC)
+    set.seed(1)
     pred_basal_758_2 <- big_prodVec(G, info_snp$best_grid_sp_mean_K, ind.row = ind.final.val, ind.col = info_snp$'_NUM_ID_')
     AUC_pred_baseline_758_2 <- AUCBoot(pred_basal_758_2, y[ind.final.val], seed = 1)
     info_snp2 <- read.delim("info_snp_tab_INT_model.tsv", sep = "\t")
@@ -73,7 +74,8 @@ comparar_roc_curves <- function(){
     roc1 <- roc(y[ind.final.val], pred_INT_model)
     roc2 <- roc(y[ind.final.val], pred_basal_758_2)
     roc.test(roc1, roc2)
-    #tiff("roc_comparacion_modelos_generados.tiff",width = 1080, height = 1080, pointsize = 27)
+    tiff("roc_comparacion_modelos_generados.tiff",width = 1080, height = 1080, pointsize = 27)
+    #png("roc_comparacion_modelos_generados.png",width = 1080, height = 1080, pointsize = 27)
     rocobj1 <- plot.roc(y[ind.final.val], pred_INT_model,
                     main="Statistical comparison",
                     percent=TRUE,
@@ -85,11 +87,12 @@ comparar_roc_curves <- function(){
     print(testobj)
     text(50, 50, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
     legend("bottomright", legend=c("INT Model", "PRS Basal"), col=c("#1c61b6", "#008600"), lwd=2)
-    #dev.off()
+    dev.off()
     roc1 <- roc(y[ind.final.val], pred_DE_model)
     roc2 <- roc(y[ind.final.val], pred_basal_758_2)
     roc.test(roc1, roc2)
-    #tiff("roc_comparacion_modelos_generados2.tiff",width = 1080, height = 1080, pointsize = 27)
+    tiff("roc_comparacion_modelos_generados2.tiff",width = 1080, height = 1080, pointsize = 27)
+    #png("roc_comparacion_modelos_generados2.png",width = 1080, height = 1080, pointsize = 27)
     rocobj1 <- plot.roc(y[ind.final.val], pred_DE_model,
                     main="Statistical comparison",
                     percent=TRUE,
@@ -101,12 +104,13 @@ comparar_roc_curves <- function(){
     print(testobj)
     text(50, 50, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
     legend("bottomright", legend=c("DE Model", "PRS Basal"), col=c("#1c61b6", "#008600"), lwd=2)
-    #dev.off()
+    dev.off()
+    system("scp -P 1313 roc_comparacion_modelos_generado* adolfo@200.89.65.156:/media/run-projects/Adolfo/Resultados_Tesis/Objetivo_3/")
     }
 
 library(bigsnpr)
-load("CIMBA_GRID-SP.RData")
-jk <- y
+#load("CIMBA_GRID-SP.RData")
+#jk <- y
 load("../1er_Objetivo/2_entorno_validacion_cruzada.RData")
 pred_basal_758 <- big_prodVec(G, info_snp$best_grid_sp_mean_K, ind.row = ind.final.val, ind.col = info_snp$'_NUM_ID_')
 pred_basal_1500 <- big_prodVec(G, info_snp$best_grid_sp_mean_K, ind.row = poblacion_restante, ind.col = info_snp$'_NUM_ID_')
@@ -123,6 +127,7 @@ sub_pob3 <- setdiff(setdiff(ind.final.val, sub_pob1),sub_pob2)
 
 evaluar_rendimientos()
 evaluar_rendimientos_DE()
+comparar_roc_curves()
 
 evaluar_rendimientos2 <- function(){
     info_snp2 <- read.delim("info_snp_tab_INT_model.tsv", sep = "\t")
@@ -182,8 +187,8 @@ system("scp -P 1313 roc_comparacion.tiff adolfo@200.89.65.156:/media/run-project
 
 comparar_roc_curves()
 
-info_snp2 <- read.delim("info_snp_tab_DE_model.tsv", sep = "\t")
-#info_snp2 <- read.delim("info_snp_tab_INT_model.tsv", sep = "\t")
+#info_snp2 <- read.delim("info_snp_tab_DE_model.tsv", sep = "\t")
+info_snp2 <- read.delim("info_snp_tab_INT_model.tsv", sep = "\t")
 info_snp2 <- info_snp2[c("rsid","Score_fix","Score2_fix")]
 info_snp2 <- merge(info_snp2,info_snp[info_snp$best_grid_sp_mean_K != 0,],by="rsid")
 info_snp2$Score2_fix <- info_snp2$Score2_fix * info_snp2$best_grid_sp_mean_K
@@ -201,6 +206,8 @@ odds_less_risk <- length(less_risk[less_risk$V2 == "Case",]$V2)/length(less_risk
 greater_risk <- tail(Prediccion[order(Prediccion$pred_INT_model),],length(ind.final.val)*0.05)
 odds_greater_risk <- length(greater_risk[greater_risk$V2 == "Case",]$V2)/length(greater_risk[greater_risk$V2 == "Control",]$V2)
 odds_ratio <- odds_greater_risk/odds_less_risk
+AUCBoot(pred_INT_model, y[ind.final.val], seed = 1)
+odds_ratio
 library(ggpubr)
 ggdensity(Prediccion, x = "pred_INT_model", add = "mean", rug = TRUE, color = "V2", fill = "V2", palette = c("#00AFBB", "#E7B800")) +
     ggtitle("Distribution of test samples PRS", subtitle = paste(best_auc_name, " = ", round(best_auc_value,4), sep = ""))+ 

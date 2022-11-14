@@ -1,20 +1,19 @@
 library(TCGAbiolinks)
-setwd("../Tesis")
 #-----------------------------------------------------------------------------------------------------------------------------------------#
-Cancer <- "BRCA"            ##Enter Cancer study abbreviation
+Cancer <- "LUAD"            ##Enter Cancer study abbreviation
 
-if (file.exists(paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = "")) == F){
-  ID_file <- read.table("TCGA_ID_MAP.csv", header=T, sep = ",") #archivo con las muestras en el server
-  Cancer_IDs_file <- ID_file[which(ID_file$Disease == Cancer), ]# extrae las muestras asociadas al cancer deseado
-  write.table(Cancer_IDs_file, sep = ",", file = paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = ""), row.names = F, quote = F, col.names = T)
-  remove(ID_file)
-  remove(Cancer_IDs_file)
-}
+#if (file.exists(paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = "")) == F){
+#  ID_file <- read.table("TCGA_ID_MAP.csv", header=T, sep = ",") #archivo con las muestras en el serve#r
+#  Cancer_IDs_file <- ID_file[which(ID_file$Disease == Cancer), ]# extrae las muestras asociadas al cancer desead#o
+#  write.table(Cancer_IDs_file, sep = ",", file = paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = ""), row.names = F, quote = F, col#.names = T)
+#  remove(ID_file)
+#  remove(Cancer_IDs_file)
+#}
 
-Original_file <- read.table(paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = ""), header=T, sep = ",")
-Original_file$patient <- as.factor(substr(Original_file$AliquotBarcode, start = 1 , stop = 12)) # recorta el barcode de la muestra para obtener la etiqueta del paciente
-length(unique(Original_file$patient))
-Original_file$TSS <- as.factor(substr(Original_file$AliquotBarcode, start = 6 , stop = 7)) # extrae los datos finales del barcode asociado al TSS
+#Original_file <- read.table(paste("TCGA_ID_MAP_",  Cancer, ".csv", sep = ""), header=T, sep = ",")
+#Original_file$patient <- as.factor(substr(Original_file$AliquotBarcode, start = 1 , stop = 12)) # recorta el barcode de la muestra #para obtener la etiqueta del paciente
+#length(unique(Original_file$patient))
+#Original_file$TSS <- as.factor(substr(Original_file$AliquotBarcode, start = 6 , stop = 7)) # extrae los datos finales del barcode #asociado al TSS
 
 if (file.exists(paste("TCGA-",  Cancer, "_clinical.csv", sep = "")) == F){
   GDCquery_clinic(paste("TCGA-", Cancer, sep = ""), type = "clinical", save.csv = T) # Descarga las caracteristicas clinicas de las muestras
@@ -22,7 +21,7 @@ if (file.exists(paste("TCGA-",  Cancer, "_clinical.csv", sep = "")) == F){
 
 Clinical_data <- read.table(paste("TCGA-",  Cancer, "_clinical.csv", sep = ""), header=T, sep = ",")
 Reduced_Clinical_data <- Clinical_data[c("submitter_id", "primary_diagnosis", "ethnicity", "race", "gender","age_at_diagnosis")] # Caracteristicas Clinicaas de Interes
-length(unique(Reduced_Clinical_data$patient))
+length(unique(Reduced_Clinical_data$submitter_id))
 
 
 # Obtener tipo de muestra, ejemplo TP=tumor primario, NT = tejido normal (generalmente cercano a la zona del tumor, segun lei)
@@ -79,3 +78,36 @@ remove(Original_file)
 remove(Reduced_Subtype)
 remove(Reduced_Original_file)
 remove(Subtype)
+
+
+        require(TCGAbiolinks)        
+        CancerProject <- "TCGA-LUAD"
+        DataDirectory <- paste0("GDC/",gsub("-","_",CancerProject))
+        FileNameData <- paste0(DataDirectory, "_","mRNA_gene_quantification",".rda")
+        query.miR <- GDCquery(project = CancerProject, data.category = "Transcriptome Profiling", data.type = "Gene Expression Quantification", workflow.type = "STAR - Counts", legacy = FALSE) #HTSeq - Counts
+        samplesDown.miR <- getResults(query.miR,cols=c("cases"))
+        dataSmTP.miR <- TCGAquery_SampleTypes(barcode = samplesDown.miR, typesample = "TP")
+        dataSmNT.miR <- TCGAquery_SampleTypes(barcode = samplesDown.miR, typesample = "NT")
+        queryDown.miR <- GDCquery(project = CancerProject, data.category = "Transcriptome Profiling", data.type = "Gene Expression Quantification", workflow.type = "STAR - Counts", legacy = FALSE, barcode = c(dataSmTP.miR, dataSmNT.miR))
+        GDCdownload(query = queryDown.miR, directory = DataDirectory)
+        dataAssy.miR <- GDCprepare(query = queryDown.miR, save = TRUE, save.filename = FileNameData, summarizedExperiment = TRUE, directory =DataDirectory)
+        matrix <- assay(dataAssy.miR,"HTSeq - Counts")
+        write.table(matrix, sep = "\t", file = "1_mRNAs_gene-level_Counts_TCGA_matrix.tab", row.names = T, quote = F, col.names = T)
+        #######################################################################################################################################
+        #              miRNAs  contiene el script tesis/1_expression_data/TCGA_data/5_Get_miRNAs_count_matrix.R
+        #######################################################################################################################################
+        FileNameData <- paste0(DataDirectory, "_","miRNA_gene_quantification",".rda")
+        query.miR <- GDCquery(project = CancerProject, data.category = "Transcriptome Profiling", data.type = "miRNA Expression Quantification", legacy = FALSE)
+        samplesDown.miR <- getResults(query.miR,cols=c("cases"))
+        dataSmTP.miR <- TCGAquery_SampleTypes(barcode = samplesDown.miR, typesample = "TP")
+        dataSmNT.miR <- TCGAquery_SampleTypes(barcode = samplesDown.miR, typesample = "NT")
+        queryDown.miR <- GDCquery(project = CancerProject, data.category = "Transcriptome Profiling", data.type = "miRNA Expression Quantification", legacy = FALSE, barcode = c(dataSmTP.miR, dataSmNT.miR))
+        GDCdownload(query = queryDown.miR, directory = DataDirectory)
+        dataAssy.miR <- GDCprepare(query = queryDown.miR, save = TRUE, save.filename = FileNameData, summarizedExperiment = TRUE, directory =DataDirectory)
+        rownames(dataAssy.miR) <- dataAssy.miR$miRNA_ID
+        read_countData <-  colnames(dataAssy.miR)[grep("count", colnames(dataAssy.miR))] # using read_count's data
+        matrix <- dataAssy.miR[, read_countData]
+        colnames(matrix) <- gsub("read_count_","", colnames(matrix))
+        names <- rownames(dataAssy.miR)
+        matrix<- cbind(names,matrix)      
+        write.table(matrix, sep = "\t", file = "miRNAs_counts.tab", row.names = F, quote = F, col.names = T) 

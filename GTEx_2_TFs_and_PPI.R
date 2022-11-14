@@ -91,6 +91,7 @@ for (ensembl_gene_id in rownames(matrix)){
 reg_info <-  dorothea_hs
 tf_in_breast <- reg_info
 tf_in_breast <- tf_in_breast[tf_in_breast$target %in% rownames(matrix),]
+tf_in_breast <- tf_in_breast[tf_in_breast$tf %in% rownames(matrix),]
 ## Obtener informacion de cantidades de interacciones totales y segun grado de confianza
 dim(tf_in_breast)
 dim(tf_in_breast[tf_in_breast$confidence == "A",])
@@ -113,7 +114,14 @@ colnames(tf_in_breast)[colnames(tf_in_breast)== "gene_id"] <- "tf"
 tf_in_breast <- merge(tf_in_breast,geneIDs1, by.x ="target",by.y="SYMBOL")
 tf_in_breast$target <- NULL
 colnames(tf_in_breast)[colnames(tf_in_breast)== "GENEID"] <- "target"
-
+tf_in_breast <- tf_in_breast[!duplicated(tf_in_breast),]
+dim(tf_in_breast)
+dim(tf_in_breast[tf_in_breast$confidence == "A",])
+dim(tf_in_breast[tf_in_breast$confidence == "B",])
+dim(tf_in_breast[tf_in_breast$confidence == "C",])
+dim(tf_in_breast[tf_in_breast$confidence == "D",])
+dim(tf_in_breast[tf_in_breast$confidence == "E",])
 write.table(tf_in_breast, sep = "\t", file ="5_Interacciones_TF-Target_tejido_mamario.tsv", row.names = F, quote = F, col.names = T)
 #system(paste("scp -P 1313 ", "5_Interacciones_TF-Target_tejido_mamario.tsv ",Taruca_adolfo_tesis, "5_Interacciones_TF-Target_tejido_mamario.tsv", sep = ""))
 print("finalizado")
+datos.loc[((datos[1].isin(GTEx.index))   | (datos[1].str.contains("hsa"))) & (datos[0].isin(GTEx.index))]

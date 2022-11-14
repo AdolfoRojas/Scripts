@@ -44,7 +44,7 @@ df4 <- df[df$biotype != "protein_coding" & df$biotype != "lncRNA",]
 
 library(VennDiagram)
 library(RColorBrewer)
-myCol <- brewer.pal(4, "Pastel2")
+myCol <- brewer.pal(4, "Dark2")
 
 venn.diagram(
   x = list(df1[df1$subtype == "Basal" & df1$log2FoldChange > 0,]$Transcrito,

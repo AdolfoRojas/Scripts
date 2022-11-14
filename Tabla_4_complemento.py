@@ -22,5 +22,4 @@ elementos_unicos_gencode.loc[elementos_unicos_gencode["gene_type"] =="miRNA"].gr
 
 elementos_unicos_no_gencode = elementos_unicos.loc[~elementos_unicos["element1"].isin(gencode["gene_id"])]
 elementos_unicos_no_gencode.loc[elementos_unicos_no_gencode["element1"].str.contains("hsa-")].groupby("int_type").count()
-
 elementos_unicos_no_gencode = elementos_unicos_no_gencode.loc[~elementos_unicos_no_gencode["element1"].str.contains("hsa-")]

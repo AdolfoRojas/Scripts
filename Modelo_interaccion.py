@@ -299,4 +299,4 @@ result4["Score2_fix"] = (5 * result4.Score2_fix) + 1
 Evaluar_rendimiento2()
 #######################################################################################################################################
 # Post Analisis
-genes_found = first_interacion_lvl_score.loc[first_interacion_lvl_score["Score"] != 0,]
+genes_found = first_interacion_lvl_score.loc[first_interacion_lvl_score["Score"] != 0,].drop_duplicates()

@@ -57,7 +57,7 @@ de$delabel <- NA
 de$delabel[de$important != "NO"] <- de$Transcrito[de$important != "NO"]
 de$delabel <- gsub("hsa-", "", de$delabel)
 # plot adding up all layers we have seen so far
-p2 <- ggplot(data=de, aes(x=log2FoldChange, y=-log10(padj), col=diffexpressed, label=delabel)) +
+p2 <- ggplot(data = de, aes(x=log2FoldChange, y=-log10(padj), col=diffexpressed, label=delabel)) +
   #ggtitle(paste("Breast cancer diferential expression analysis\nmiRNAs\n", subtype, " samples", sep = ""))+
   geom_point(size = 1.4) + theme_minimal() +
   geom_text_repel(segment.size = 0.2, force = 8) +

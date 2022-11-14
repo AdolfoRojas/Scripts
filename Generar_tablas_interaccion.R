@@ -19,7 +19,6 @@ tfs_int <- read.delim("GTEx_TFs_PPI/5_Interacciones_TF-Target_tejido_mamario.tsv
 tfs_int <- tfs_int[c("tf","target")]
 names(tfs_int) <- c("element1","element2")
 tfs_int <- tfs_int[!duplicated(tfs_int),] # 21666     2
-tfs_int <- tfs_int[!duplicated(tfs_int),]
 tfs_int$int_type <- "TF-Target"
 
 ## NPInter
@@ -35,7 +34,6 @@ names(NPInter_int2) <- c("element2","element1")
 NPInter_int <- rbind(NPInter_int,NPInter_int2)
 NPInter_int$int_type <- "lncRNAfunc"
 NPInter_int <- NPInter_int[!duplicated(NPInter_int),]
-
 
 ## ceRNA
 load("Sponge/1_entorno_completo_sponge2.RData")
